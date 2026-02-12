@@ -1,22 +1,23 @@
-from huggingface_hub import InferenceClient
+from groq import Groq
 from app.config import settings
 
 
 class LLMService:
     def __init__(self):
-        self.client = InferenceClient(
-            model=settings.HF_MODEL,
-            token=settings.HF_API_KEY,
-        )
+        self.client = Groq(api_key=settings.GROQ_API_KEY)
 
     async def generate(self, prompt: str) -> str:
         try:
-            response = self.client.text_generation(
-                prompt,
-                max_new_tokens=settings.MAX_RESPONSE_TOKENS,
+            completion = self.client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
                 temperature=settings.TEMPERATURE,
-                return_full_text=False,
+                max_tokens=settings.MAX_RESPONSE_TOKENS
             )
-            return response.strip()
+
+            return completion.choices[0].message.content
+
         except Exception as e:
-            return f"Error generating response from Hugging Face: {str(e)}"
+            return f"Error generating response from Groq: {str(e)}"

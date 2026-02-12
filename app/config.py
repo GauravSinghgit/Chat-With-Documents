@@ -4,10 +4,9 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 class Settings(BaseSettings):
-    HF_MODEL: str
-    #HF_BASE_URL: str
-    HF_API_KEY: str
-    # HF_MODEL: str = "mistralai/Mistral-7B-Instruct-v0.2"
+    MODEL: str
+    GROQ_API_KEY: str
+   
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     DATABASE_URL: str = "sqlite:///./data/conversations.db"
     VECTOR_STORE_PATH: str = "./data/vectorstore"

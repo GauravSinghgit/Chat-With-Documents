@@ -16,7 +16,8 @@ class VectorStoreService:
             with open(self.metadata_path, "rb") as f:
                 self.metadata = pickle.load(f)
         else:
-            self.index = faiss.IndexFlatL2(self.dimension)
+            self.index = faiss.IndexFlatIP(self.dimension)
+
             self.metadata = {"texts": [], "metadatas": []}
     
     def add_documents(self, texts: List[str], embeddings: np.ndarray, metadatas: List[Dict[str, Any]]):
