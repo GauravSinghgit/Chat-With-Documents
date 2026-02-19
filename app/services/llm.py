@@ -13,7 +13,7 @@ class LLMService:
     async def generate(self, prompt: str) -> str:
         """Standard single-response generation."""
         try:
-            completion = self.client.chat.completions.create(
+            completion = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=settings.TEMPERATURE,
@@ -40,4 +40,4 @@ class LLMService:
                     yield content
         except Exception as e:
             logger.error(f"LLM stream error: {e}")
-            yield f"Error: {str(e)}"
+            yield "Sorry, I encountered an error. Please try again."

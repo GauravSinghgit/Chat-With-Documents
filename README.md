@@ -14,9 +14,22 @@ A production-ready AI assistant with RAG, streaming chat, JWT auth, agentic tool
 | **Agentic loop** | ReAct agent with multi-step tool use |
 | **Web search** | DuckDuckGo — free, no API key needed |
 | **Document management** | Upload PDF/TXT/MD, auto-summary, delete, re-index |
+| **Document → Chat** | "Chat" button on every document opens a focused chat |
 | **Rate limiting** | 30 req/min on chat, 10 req/min on uploads |
 | **Dark mode** | Full light/dark theme toggle |
 | **PII masking** | Auto-mask emails, phones, SSNs |
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| LLM | [Groq](https://console.groq.com) — `llama-3.3-70b-versatile` |
+| Embeddings | `sentence-transformers/all-MiniLM-L6-v2` (384-dim) |
+| Vector Store | FAISS (cosine similarity) |
+| Backend | FastAPI + SQLAlchemy + SQLite |
+| Frontend | Next.js 14 App Router + shadcn/ui + Tailwind |
 
 ---
 
@@ -25,46 +38,71 @@ A production-ready AI assistant with RAG, streaming chat, JWT auth, agentic tool
 ### 1. Backend
 
 ```bash
+git clone <repo-url>
 cd AI-ASSISTANT-PLATFORM
 
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
 pip install -r requirements.txt
 
 cp .env.example .env
-# Edit .env — set GROQ_API_KEY=your_key_here
-
-# IMPORTANT: Delete old DB if upgrading from v1
-rm -rf data/
+# Set GROQ_API_KEY in .env
 
 uvicorn app.main:app --reload --port 8000
 ```
 
-- Backend: http://localhost:8000
-- Swagger docs: http://localhost:8000/docs
+- API: http://localhost:8000
+- Swagger UI: http://localhost:8000/docs
 
 ### 2. Frontend
 
 ```bash
 cd frontend
-
-cp .env.local.example .env.local
-# Already points to http://localhost:8000
-
 npm install
 npm run dev
 ```
 
-- Frontend: http://localhost:3000
+- App: http://localhost:3000
 
 ---
 
-## Docker (Full Stack)
+## Environment Variables (`.env`)
+
+```env
+# Required
+GROQ_API_KEY=your_groq_api_key
+
+# LLM — use an active Groq model (llama3-8b-8192 is decommissioned)
+MODEL=llama-3.3-70b-versatile
+TEMPERATURE=0.7
+MAX_RESPONSE_TOKENS=1024
+MAX_CONTEXT_LENGTH=4096
+
+# Tools
+ALLOWED_TOOLS=search_documents,get_conversation_history,search_web
+TOP_K=5
+
+# JWT (change in production!)
+JWT_SECRET=change-this-to-a-very-long-random-secret-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=10080
+
+# Security
+PII_MASKING_ENABLED=true
+```
+
+> **Important:** `llama3-8b-8192` has been decommissioned by Groq. Use `llama-3.3-70b-versatile` or check [Groq's model list](https://console.groq.com/docs/models).
+
+---
+
+## Docker
 
 ```bash
-cp .env.example .env      # fill in GROQ_API_KEY
-
+cp .env.example .env   # set GROQ_API_KEY
 docker-compose up --build
 ```
 
@@ -73,26 +111,17 @@ docker-compose up --build
 
 ---
 
-## Deploy: Render (Backend) + Vercel (Frontend)
+## Deploy: Render + Vercel
 
 ### Backend → Render
-
-1. Push repo to GitHub
-2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect repo — `render.yaml` is auto-detected
-4. In Render dashboard → Environment:
-   - Set `GROQ_API_KEY` = your key from [console.groq.com](https://console.groq.com)
-5. Deploy (~3 min)
-
-Backend URL: `https://ai-assistant-backend.onrender.com`
+1. Push to GitHub
+2. Render → New Web Service → connect repo (`render.yaml` auto-detected)
+3. Set env var: `GROQ_API_KEY`
 
 ### Frontend → Vercel
-
-1. Go to [vercel.com](https://vercel.com) → New Project
-2. Import repo, set **Root Directory** = `frontend`
-3. Add environment variable:
-   - `NEXT_PUBLIC_API_URL` = your Render URL
-4. Deploy
+1. Vercel → New Project → import repo
+2. Set **Root Directory** = `frontend`
+3. Set env var: `NEXT_PUBLIC_API_URL` = your Render backend URL
 
 ---
 
@@ -103,90 +132,63 @@ Backend URL: `https://ai-assistant-backend.onrender.com`
 | POST | `/api/auth/register` | — | Create account |
 | POST | `/api/auth/login` | — | Get JWT token |
 | GET | `/api/auth/me` | Required | Current user |
-| POST | `/api/chat` | Optional | Standard chat (full response) |
+| POST | `/api/chat` | Optional | Standard chat |
 | POST | `/api/chat/stream` | Optional | Streaming chat (SSE) |
-| GET | `/api/conversations` | Required | List user conversations |
+| GET | `/api/conversations` | Required | List conversations |
 | GET | `/api/conversations/{id}/messages` | Required | Get messages |
-| PATCH | `/api/conversations/{id}/title` | Required | Rename conversation |
-| DELETE | `/api/conversations/{id}` | Required | Delete conversation |
-| POST | `/api/documents/ingest` | Optional | Upload files (multi-file) |
+| PATCH | `/api/conversations/{id}/title` | Required | Rename |
+| DELETE | `/api/conversations/{id}` | Required | Delete |
+| POST | `/api/documents/ingest` | Optional | Upload PDF/TXT/MD |
 | GET | `/api/documents` | Optional | List documents |
-| GET | `/api/documents/{id}` | Optional | Get document details |
-| DELETE | `/api/documents/{id}` | Required | Delete doc + vectors |
+| GET | `/api/documents/{id}` | Optional | Get document |
+| DELETE | `/api/documents/{id}` | Required | Delete + remove vectors |
 | POST | `/api/documents/{id}/reindex` | Required | Re-embed document |
 | GET | `/api/health` | — | Health + stats |
 
 ---
 
-## Environment Variables (.env)
+## Project Structure
 
-```env
-# Required
-GROQ_API_KEY=your_groq_api_key
-
-# JWT (change in production!)
-JWT_SECRET=super-secret-key-min-32-chars
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
-
-# LLM
-MODEL=llama-3.3-70b-versatile
-TEMPERATURE=0.7
-MAX_RESPONSE_TOKENS=1024
-
-# Features
-PII_MASKING_ENABLED=true
-ALLOWED_TOOLS=search_documents,get_conversation_history,search_web
-TOP_K=5
 ```
- Run Locally — Two Terminals                                                   
-                                                                                  Terminal 1 — Backend                                                                                                                                          
-  cd D:\Dev\personal\AI-ASSISTANT-PLATFORM
+AI-ASSISTANT-PLATFORM/
+├── app/
+│   ├── api/            # routes: auth, chat, documents, conversations, health
+│   ├── services/       # llm, embeddings, vectorstore, rag, agent, tools, memory
+│   ├── utils/          # logger, rate_limit, security, prompts
+│   ├── config.py       # Pydantic settings from .env
+│   ├── models.py       # SQLAlchemy ORM (User, Conversation, Message, Document)
+│   ├── schemas.py      # Pydantic request/response models
+│   └── main.py         # FastAPI app entry point
+├── frontend/
+│   ├── app/
+│   │   ├── (auth)/          # /login, /register
+│   │   ├── chat/            # /chat + /chat/[id] — with sidebar layout
+│   │   └── documents/       # /documents — with sidebar layout
+│   ├── components/
+│   │   ├── chat/            # ChatSidebar, ChatInterface, ChatInput, MessageBubble
+│   │   └── ui/              # shadcn/ui components
+│   └── lib/
+│       ├── api/             # fetch clients: auth, chat, documents
+│       └── hooks/           # useStreamChat, useAuth
+├── data/                    # runtime data (gitignored)
+│   ├── conversations.db     # SQLite
+│   ├── vectorstore/         # FAISS index + metadata.pkl
+│   └── logs/
+├── docker-compose.yml
+├── Dockerfile
+├── render.yaml
+└── requirements.txt
+```
 
-  # Activate your Python 3.10 environment (already installed)
-  venv\Scripts\activate   # if you have a venv, otherwise skip
+---
 
-  # Delete old DB (schema changed — one-time only)
-  rmdir /s /q data
+## Bugs Fixed
 
-  # Start backend
-  C:\Users\rudra\AppData\Local\Programs\Python\Python310\Scripts\uvicorn.exe    
-  app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  Backend: http://localhost:8000/docs (Swagger UI)
-
-  Terminal 2 — Frontend
-
-  cd D:\Dev\personal\AI-ASSISTANT-PLATFORM\frontend
-
-  # Already done: npm install ✓
-
-  npm run dev
-
-  Frontend: http://localhost:3000
-
-  ---
-  What was built
-
-  Backend (all new on top of existing RAG):
-  - POST /api/auth/register + POST /api/auth/login — JWT auth
-  - POST /api/chat/stream — SSE streaming (token by token)
-  - GET/DELETE /api/conversations — list + delete per user
-  - POST /api/documents/ingest — multi-file upload (PDF/TXT/MD), auto-summary,  
-  status tracking
-  - GET/DELETE /api/documents/{id} + re-index endpoint
-  - DuckDuckGo web search tool (free, no API key)
-  - ReAct agent loop (use_agent: true in chat request)
-  - Rate limiting (30/min chat, 10/min uploads)
-  - Loguru structured logging → data/logs/app.log
-
-  Frontend (frontend/):
-  - Login + Register pages (JWT)
-  - Chat sidebar with conversation history
-  - Streaming chat interface (RAG / Web / Agent toggles)
-  - Documents page — drag & drop upload, summary display, delete, re-index      
-  - Dark/light mode toggle
-
-  Deployment:
-  - Dockerfile + docker-compose.yml for local Docker
-  - render.yaml for one-click Render deploy
+| Bug | Root Cause | Fix |
+|---|---|---|
+| Upload hangs forever | `generate()` called sync Groq client inside `async def`, blocking the event loop | Switched to `await async_client.chat.completions.create(...)` |
+| 400 on all LLM calls | `llama3-8b-8192` decommissioned by Groq | Updated model to `llama-3.3-70b-versatile` |
+| Raw errors shown in UI | `str(e)` returned directly in SSE stream and API responses | All errors return generic messages; raw details only in server logs |
+| Documents not visible after upload | `chunk_count`/`page_count` can be `None`, causing Pydantic 500 on list endpoint | Added `= 0` defaults to schema fields |
+| Documents page had no sidebar | Standalone page outside chat layout | Added `documents/layout.tsx` with shared `ChatSidebar` |
+| `fetchDocs` silent failure | No error shown when list API fails | Added `toast.error` on failure |
