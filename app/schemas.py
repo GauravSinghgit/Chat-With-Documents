@@ -83,8 +83,8 @@ class DocumentResponse(BaseModel):
     original_filename: str
     file_type: str
     file_size: int
-    chunk_count: int
-    page_count: int
+    chunk_count: int = 0
+    page_count: int = 0
     status: str
     summary: Optional[str]
     created_at: datetime

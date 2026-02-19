@@ -67,7 +67,7 @@ async def ingest_documents(
             results.append({"filename": file.filename, "error": e.detail})
         except Exception as e:
             logger.error(f"Failed to process {file.filename}: {e}")
-            results.append({"filename": file.filename, "error": str(e)})
+            results.append({"filename": file.filename, "error": "Failed to process file. Please check the file and try again."})
 
     return {"ingested": len([r for r in results if "error" not in r]), "results": results}
 

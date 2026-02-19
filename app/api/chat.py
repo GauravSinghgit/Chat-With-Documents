@@ -146,7 +146,7 @@ async def chat_stream(
                 yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
         except Exception as e:
             logger.error(f"Stream error: {e}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Something went wrong. Please try again.'})}\n\n"
             return
 
         memory_service.add_message(db, body.conversation_id, "assistant", full_response)

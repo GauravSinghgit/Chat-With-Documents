@@ -107,4 +107,4 @@ class AgentService:
                 return f"Unknown tool: {tool_name}"
         except Exception as e:
             logger.error(f"Tool {tool_name} failed: {e}")
-            return f"Tool error: {str(e)}"
+            return "Tool execution failed. Continuing without this result."
