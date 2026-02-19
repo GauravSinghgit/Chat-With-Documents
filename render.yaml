@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ai-assistant-backend
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render auto-generates a random value
+      - key: MODEL
+        value: llama-3.3-70b-versatile
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "10080"
+      - key: PII_MASKING_ENABLED
+        value: "true"
+      - key: ALLOWED_TOOLS
+        value: "search_documents,get_conversation_history,search_web"
+      - key: TOP_K
+        value: "5"
+      - key: MAX_RESPONSE_TOKENS
+        value: "1024"
+      - key: TEMPERATURE
+        value: "0.7"
+    disk:
+      name: ai-assistant-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
