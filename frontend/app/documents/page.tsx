@@ -85,7 +85,18 @@ export default function DocumentsPage() {
     setUploading(false);
 
     if (result.ok) {
-      toast.success(`Uploaded ${result.data.ingested} file(s) successfully`);
+      const { ingested, results } = result.data;
+      if (ingested > 0) {
+        toast.success(`Uploaded ${ingested} file(s) successfully`);
+      }
+      // Surface per-file errors
+      const failed = (results as Array<{ filename?: string; error?: string }>).filter((r) => r.error);
+      failed.forEach((r) =>
+        toast.error(`${r.filename ?? "File"}: ${r.error}`)
+      );
+      if (ingested === 0 && failed.length === 0) {
+        toast.error("Upload failed — no files were processed");
+      }
       fetchDocs();
     } else {
       toast.error(result.error || "Upload failed");

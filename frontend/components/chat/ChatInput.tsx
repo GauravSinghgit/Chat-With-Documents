@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent, useEffect } from "react";
+import { useState, useRef, KeyboardEvent } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

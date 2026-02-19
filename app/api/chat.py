@@ -88,7 +88,12 @@ async def chat(
         tool_results=tool_results,
     )
 
-    response_text = await llm_service.generate(prompt)
+    try:
+        response_text = await llm_service.generate(prompt)
+    except Exception as e:
+        logger.error(f"LLM generate error: {e}")
+        raise HTTPException(status_code=503, detail="AI service unavailable. Please try again.")
+
     memory_service.add_message(db, body.conversation_id, "assistant", response_text)
     _maybe_set_title(db, body.conversation_id, sanitized)
 

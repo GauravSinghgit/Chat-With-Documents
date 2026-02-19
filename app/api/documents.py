@@ -13,6 +13,7 @@ import tempfile
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -66,8 +67,8 @@ async def ingest_documents(
         except HTTPException as e:
             results.append({"filename": file.filename, "error": e.detail})
         except Exception as e:
-            logger.error(f"Failed to process {file.filename}: {e}")
-            results.append({"filename": file.filename, "error": "Failed to process file. Please check the file and try again."})
+            logger.error(f"Failed to process {file.filename}: {e}", exc_info=True)
+            results.append({"filename": file.filename, "error": f"Processing failed: {type(e).__name__}: {e}"})
 
     return {"ingested": len([r for r in results if "error" not in r]), "results": results}
 
@@ -164,7 +165,9 @@ async def list_documents(
 ):
     query = db.query(Document)
     if current_user:
-        query = query.filter(Document.user_id == current_user.id)
+        query = query.filter(
+            or_(Document.user_id == current_user.id, Document.user_id == None)
+        )
     if file_type:
         query = query.filter(Document.file_type == file_type.lstrip("."))
 

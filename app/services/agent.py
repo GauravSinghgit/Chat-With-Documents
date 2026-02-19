@@ -50,7 +50,11 @@ class AgentService:
 
         for iteration in range(self.max_iterations):
             logger.debug(f"Agent iteration {iteration + 1}")
-            response = await self.llm.generate(prompt)
+            try:
+                response = await self.llm.generate(prompt)
+            except Exception as e:
+                logger.error(f"LLM error in agent iteration {iteration + 1}: {e}")
+                return {"answer": "I'm unable to respond right now. Please try again.", "thoughts": thoughts, "tool_calls": tool_calls}
             thoughts.append(response)
 
             # Found final answer

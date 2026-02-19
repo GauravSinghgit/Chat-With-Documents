@@ -29,7 +29,6 @@ def get_settings():
 
 # ─── Services (singletons via lru_cache) ─────────────────────────────────────
 
-@lru_cache()
 def get_llm_service():
     return LLMService()
 
