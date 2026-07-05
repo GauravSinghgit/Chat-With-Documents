@@ -1,110 +1,93 @@
+"""LangGraph agent: a small hand-built graph with a tool-calling LLM node
+and a ToolNode, looping until the model stops requesting tools.
 """
-ReAct Agent — Think → Act → Observe loop.
-The LLM decides which tools to call and iterates until it has a final answer.
-"""
-from typing import List, Dict, Any
+from typing import Annotated, Any, Dict, List, TypedDict
+
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
 from sqlalchemy.orm import Session
+
+from app.config import settings
 from app.services.llm import LLMService
-from app.services.tools import ToolService
+from app.services.tools import ToolService, build_tools
 from app.utils.logger import logger
 
-REACT_SYSTEM_PROMPT = """You are an intelligent AI assistant with access to tools.
-Reason step-by-step and use tools when needed to give accurate answers.
+SYSTEM_PROMPT = (
+    "You are an intelligent AI assistant with access to tools. Use tools when "
+    "they would improve the accuracy of your answer, then give a clear, direct "
+    "final answer. Use at most 4 tool calls."
+)
 
-Available tools:
-- search_documents: Search uploaded knowledge base documents
-- get_conversation_history: Retrieve past conversation context
-- search_web: Search the web for up-to-date information
+MAX_ITERATIONS = 4
 
-Format your response EXACTLY like this:
-THOUGHT: [your reasoning about what to do]
-ACTION: [tool_name or NONE]
-INPUT: [input for the tool, or leave blank if ACTION is NONE]
 
-After receiving tool results, continue reasoning until you have enough info, then:
-FINAL ANSWER: [your complete, helpful answer to the user]
-
-Rules:
-- Always start with THOUGHT
-- Use FINAL ANSWER when you have enough information
-- Keep tool inputs concise and specific
-- Maximum 4 tool calls per query
-"""
+class AgentState(TypedDict):
+    messages: Annotated[List[Any], add_messages]
 
 
 class AgentService:
     def __init__(self, llm_service: LLMService, tool_service: ToolService):
-        self.llm = llm_service
+        self.llm_service = llm_service
         self.tool_service = tool_service
-        self.max_iterations = 4
+        # In-memory checkpointer: agent scratchpad persists per conversation_id
+        # for the life of the process. A Postgres checkpointer would carry this
+        # across restarts, but Message/Conversation tables remain the source
+        # of truth for chat history either way.
+        self._checkpointer = MemorySaver()
 
-    async def run(
-        self,
-        question: str,
-        conversation_id: str,
-        db: Session,
-    ) -> Dict[str, Any]:
-        prompt = f"{REACT_SYSTEM_PROMPT}\n\nUser question: {question}\n\n"
+    def _build_graph(self, tools: List[Any]):
+        model = ChatGroq(
+            model=settings.MODEL,
+            api_key=settings.GROQ_API_KEY,
+            temperature=settings.TEMPERATURE,
+            max_tokens=settings.MAX_RESPONSE_TOKENS,
+        ).bind_tools(tools)
+
+        def call_model(state: AgentState) -> Dict[str, Any]:
+            response = model.invoke(state["messages"])
+            return {"messages": [response]}
+
+        graph = StateGraph(AgentState)
+        graph.add_node("agent", call_model)
+        graph.add_node("tools", ToolNode(tools))
+        graph.set_entry_point("agent")
+        graph.add_conditional_edges("agent", tools_condition, {"tools": "tools", END: END})
+        graph.add_edge("tools", "agent")
+        return graph.compile(checkpointer=self._checkpointer)
+
+    async def run(self, question: str, conversation_id: str, db: Session) -> Dict[str, Any]:
+        tools = build_tools(
+            tool_service=self.tool_service,
+            llm_service=self.llm_service,
+            db=db,
+            conversation_id=conversation_id,
+        )
+        graph = self._build_graph(tools)
+        config = {
+            "configurable": {"thread_id": conversation_id},
+            "recursion_limit": MAX_ITERATIONS * 2 + 1,
+        }
+        result = await graph.ainvoke(
+            {"messages": [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=question)]},
+            config=config,
+        )
+
+        messages = result["messages"]
+        final = messages[-1]
+        answer = final.content if isinstance(final, AIMessage) else str(final.content)
+
         thoughts: List[str] = []
-        tool_calls: List[Dict] = []
+        tool_calls: List[Dict[str, Any]] = []
+        for m in messages:
+            if isinstance(m, AIMessage):
+                if m.content:
+                    thoughts.append(m.content)
+                for tc in m.tool_calls or []:
+                    tool_calls.append({"tool": tc["name"], "input": tc["args"]})
 
-        for iteration in range(self.max_iterations):
-            logger.debug(f"Agent iteration {iteration + 1}")
-            response = await self.llm.generate(prompt)
-            thoughts.append(response)
-
-            # Found final answer
-            if "FINAL ANSWER:" in response:
-                answer = response.split("FINAL ANSWER:")[-1].strip()
-                logger.info(f"Agent completed in {iteration + 1} iterations")
-                return {
-                    "answer": answer,
-                    "thoughts": thoughts,
-                    "tool_calls": tool_calls,
-                }
-
-            # Parse ACTION and INPUT
-            action, tool_input = self._parse_action(response)
-
-            if action and action.upper() != "NONE":
-                result = self._execute_tool(action, tool_input, conversation_id, db)
-                tool_calls.append({"tool": action, "input": tool_input, "result": result})
-                logger.info(f"Agent called tool: {action}")
-                # Append observation to prompt for next iteration
-                observation = str(result)[:800]
-                prompt += f"{response}\nOBSERVATION from {action}: {observation}\n\n"
-            else:
-                # No action — treat as final answer
-                break
-
-        # Fallback: return last thought as answer
-        final = thoughts[-1] if thoughts else "I could not generate a response."
-        if "FINAL ANSWER:" in final:
-            final = final.split("FINAL ANSWER:")[-1].strip()
-        return {"answer": final, "thoughts": thoughts, "tool_calls": tool_calls}
-
-    def _parse_action(self, response: str):
-        action = None
-        tool_input = ""
-        for line in response.splitlines():
-            line = line.strip()
-            if line.startswith("ACTION:"):
-                action = line.replace("ACTION:", "").strip()
-            elif line.startswith("INPUT:"):
-                tool_input = line.replace("INPUT:", "").strip()
-        return action, tool_input
-
-    def _execute_tool(self, tool_name: str, query: str, conversation_id: str, db: Session):
-        tool_name = tool_name.lower().strip()
-        try:
-            if tool_name == "search_documents":
-                return self.tool_service.rag_service.retrieve(query)
-            elif tool_name == "get_conversation_history":
-                return self.tool_service.memory_service.get_history(db, conversation_id, limit=5)
-            elif tool_name == "search_web":
-                return self.tool_service.search_web(query)
-            else:
-                return f"Unknown tool: {tool_name}"
-        except Exception as e:
-            logger.error(f"Tool {tool_name} failed: {e}")
-            return "Tool execution failed. Continuing without this result."
+        logger.info(f"Agent completed for conv {conversation_id} with {len(tool_calls)} tool calls")
+        return {"answer": answer, "thoughts": thoughts, "tool_calls": tool_calls}

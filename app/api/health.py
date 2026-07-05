@@ -14,9 +14,9 @@ async def health_check(vectorstore: VectorStoreService = Depends(get_vectorstore
         status="ok",
         version="2.0.0",
         services={
-            "llm": "groq",
+            "llm": "groq (langgraph agent)",
             "embeddings": "sentence-transformers",
-            "vectorstore": f"faiss ({stats['total_vectors']} vectors)",
-            "database": "sqlite",
+            "vectorstore": f"{stats['index_type']} [{stats['collection']}]",
+            "database": "postgres",
         },
     )

@@ -41,7 +41,7 @@ def get_embedding_service():
 
 @lru_cache()
 def get_vectorstore_service():
-    return VectorStoreService()
+    return VectorStoreService(embedding_service=get_embedding_service())
 
 
 def get_memory_service():
@@ -49,13 +49,9 @@ def get_memory_service():
 
 
 def get_rag_service(
-    embedding_service: EmbeddingService = Depends(get_embedding_service),
     vectorstore_service: VectorStoreService = Depends(get_vectorstore_service),
 ):
-    return RAGService(
-        embedding_service=embedding_service,
-        vectorstore_service=vectorstore_service,
-    )
+    return RAGService(vectorstore_service=vectorstore_service)
 
 
 def get_tool_service(

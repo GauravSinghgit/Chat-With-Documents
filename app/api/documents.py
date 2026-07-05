@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import (
-    get_embedding_service,
     get_llm_service,
     get_vectorstore_service,
     get_current_user_optional,
@@ -25,7 +24,6 @@ from app.dependencies import (
 )
 from app.models import Document, User
 from app.schemas import DocumentResponse, DocumentListResponse
-from app.services.embeddings import EmbeddingService
 from app.services.llm import LLMService
 from app.services.vectorstore import VectorStoreService
 from app.utils.rate_limit import limiter
@@ -48,7 +46,6 @@ async def ingest_documents(
     generate_summary: bool = Query(default=True),
     db: Session = Depends(get_db),
     vectorstore: VectorStoreService = Depends(get_vectorstore_service),
-    embedding_service: EmbeddingService = Depends(get_embedding_service),
     llm_service: LLMService = Depends(get_llm_service),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
@@ -59,7 +56,7 @@ async def ingest_documents(
     for file in files:
         try:
             result = await _process_single_file(
-                file, db, vectorstore, embedding_service,
+                file, db, vectorstore,
                 llm_service, current_user, generate_summary
             )
             results.append(result)
@@ -76,7 +73,6 @@ async def _process_single_file(
     file: UploadFile,
     db: Session,
     vectorstore: VectorStoreService,
-    embedding_service: EmbeddingService,
     llm_service: LLMService,
     current_user: Optional[User],
     generate_summary: bool,
@@ -128,12 +124,10 @@ async def _process_single_file(
     db.add(doc)
     db.commit()
 
-    # Chunk & embed
+    # Chunk & embed (PGVector embeds internally via the configured model)
     chunks = _chunk_text(sanitized)
-    embeddings = embedding_service.embed_documents(chunks)
     vectorstore.add_documents(
         chunks,
-        embeddings,
         [{"doc_id": doc.id, "filename": file.filename, "page": i} for i in range(len(chunks))],
     )
 
@@ -222,7 +216,6 @@ async def reindex_document(
     document_id: int,
     db: Session = Depends(get_db),
     vectorstore: VectorStoreService = Depends(get_vectorstore_service),
-    embedding_service: EmbeddingService = Depends(get_embedding_service),
     current_user: User = Depends(get_current_user),
 ):
     doc = db.query(Document).filter(Document.id == document_id).first()
@@ -242,10 +235,8 @@ async def reindex_document(
     db.commit()
 
     chunks = _chunk_text(doc.content)
-    embeddings = embedding_service.embed_documents(chunks)
     vectorstore.add_documents(
         chunks,
-        embeddings,
         [{"doc_id": doc.id, "filename": doc.filename} for _ in chunks],
     )
 

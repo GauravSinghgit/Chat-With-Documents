@@ -1,25 +1,11 @@
-from sentence_transformers import SentenceTransformer
+from langchain_huggingface import HuggingFaceEmbeddings
+
 from app.config import settings
-from typing import List
-import numpy as np
 
 
 class EmbeddingService:
+    """Wraps the configured sentence-transformers model behind LangChain's
+    Embeddings interface so it plugs directly into the PGVector store."""
+
     def __init__(self):
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
-
-    def embed_query(self, text: str) -> np.ndarray:
-        embedding = self.model.encode(
-            text,
-            convert_to_numpy=True,
-            normalize_embeddings=True   # 
-        )
-        return embedding.astype("float32")
-
-    def embed_documents(self, texts: List[str]) -> np.ndarray:
-        embeddings = self.model.encode(
-            texts,
-            convert_to_numpy=True,
-            normalize_embeddings=True   # 
-        )
-        return embeddings.astype("float32")
+        self.model = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
