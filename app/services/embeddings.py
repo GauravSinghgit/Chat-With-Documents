@@ -12,7 +12,7 @@ class EmbeddingService:
         embedding = self.model.encode(
             text,
             convert_to_numpy=True,
-            normalize_embeddings=True   # ⭐ CRITICAL FIX
+            normalize_embeddings=True   # 
         )
         return embedding.astype("float32")
 
@@ -20,6 +20,6 @@ class EmbeddingService:
         embeddings = self.model.encode(
             texts,
             convert_to_numpy=True,
-            normalize_embeddings=True   # ⭐ CRITICAL FIX
+            normalize_embeddings=True   # 
         )
         return embeddings.astype("float32")

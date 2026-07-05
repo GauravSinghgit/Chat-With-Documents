@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["localhost:3000"],
     },
   },
+  turbopack: {
+    // Explicitly set the workspace root to this project directory
+    // to silence the "multiple lockfiles detected" warning
+    root: __dirname,
+  },
   async rewrites() {
     // Proxy /api/* to the FastAPI backend in development
     return [

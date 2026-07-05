@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import os
 
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
@@ -80,14 +81,24 @@ class ChatResponse(BaseModel):
 class DocumentResponse(BaseModel):
     id: int
     filename: str
-    original_filename: str
-    file_type: str
-    file_size: int
+    original_filename: Optional[str] = None
+    file_type: Optional[str] = None
+    file_size: int = 0
     chunk_count: int = 0
     page_count: int = 0
     status: str
-    summary: Optional[str]
+    summary: Optional[str] = None
     created_at: datetime
+
+    @model_validator(mode="after")
+    def fill_nullable_fields(self):
+        """Back-fill original_filename and file_type from filename for legacy rows."""
+        if not self.original_filename:
+            self.original_filename = self.filename or ""
+        if not self.file_type:
+            ext = os.path.splitext(self.original_filename or self.filename or "")[-1]
+            self.file_type = ext.lstrip(".") if ext else "unknown"
+        return self
 
     class Config:
         from_attributes = True
