@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from typing import List
 from pathlib import Path
@@ -9,13 +10,31 @@ class Settings(BaseSettings):
     MODEL: str = "llama-3.3-70b-versatile"
     GROQ_API_KEY: str
 
-    # Embeddings & Vector Store
+    # Embeddings
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    VECTOR_STORE_PATH: str = "./data/vectorstore"
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./data/conversations.db"
+    # Database (Postgres + pgvector — also backs the document vector store)
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5433/ai_assistant"
     DOCUMENTS_PATH: str = "./data/documents"
+
+    # Comma-separated list of frontend origins allowed to make credentialed requests
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _use_psycopg_driver(cls, v: str) -> str:
+        """Managed Postgres providers (e.g. Render) hand out plain
+        postgres:// / postgresql:// URLs; SQLAlchemy needs the psycopg
+        driver explicit in the scheme."""
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+psycopg://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v
+
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
     # LLM Parameters
     MAX_CONTEXT_LENGTH: int = 4096

@@ -1,3 +1,8 @@
+databases:
+  - name: ai-assistant-db
+    databaseName: ai_assistant
+    plan: free
+
 services:
   - type: web
     name: ai-assistant-backend
@@ -9,6 +14,12 @@ services:
         sync: false          # set manually in Render dashboard
       - key: JWT_SECRET
         generateValue: true  # Render auto-generates a random value
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-assistant-db
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        sync: false          # set to your Vercel frontend URL
       - key: MODEL
         value: llama-3.3-70b-versatile
       - key: ALGORITHM

@@ -18,10 +18,16 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+from app.config import settings
 from app.database import Base
 import app.models   # VERY IMPORTANT (loads tables)
 
 target_metadata = Base.metadata
+
+# Always use the app's own settings (env var / .env) rather than the static
+# sqlalchemy.url in alembic.ini, so migrations run against whatever DB the
+# app itself is configured for.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 
 # other values from the config, defined by the needs of env.py,

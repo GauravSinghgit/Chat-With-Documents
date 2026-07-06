@@ -15,6 +15,7 @@ from app.config import settings
 from app.services.llm import LLMService
 from app.services.tools import ToolService, build_tools
 from app.utils.logger import logger
+from app.utils.prompts import build_chat_prompt
 
 SYSTEM_PROMPT = (
     "You are an intelligent AI assistant with access to tools. Use tools when "
@@ -71,10 +72,22 @@ class AgentService:
             "configurable": {"thread_id": conversation_id},
             "recursion_limit": MAX_ITERATIONS * 2 + 1,
         }
-        result = await graph.ainvoke(
-            {"messages": [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=question)]},
-            config=config,
-        )
+        try:
+            result = await graph.ainvoke(
+                {"messages": [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=question)]},
+                config=config,
+            )
+        except Exception as e:
+            # Groq's tool-calling occasionally emits malformed function-call
+            # syntax the API itself rejects (tool_use_failed). Degrade to a
+            # direct RAG-augmented answer — bypasses the flaky tool-calling
+            # protocol but still grounds the response in retrieved documents
+            # instead of surfacing a 500.
+            logger.warning(f"Agent tool call failed for conv {conversation_id}, falling back: {e}")
+            context = self.tool_service.rag_service.retrieve(question, k=3)
+            prompt = build_chat_prompt(message=question, history=[], context=context)
+            answer = await self.llm_service.generate(prompt)
+            return {"answer": answer, "thoughts": [answer], "tool_calls": []}
 
         messages = result["messages"]
         final = messages[-1]
