@@ -73,6 +73,11 @@ frontend/out/
 frontend/.swc/
 *.tsbuildinfo
 
+# Test output
+frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/
+
 # Vercel
 .vercel/
 
