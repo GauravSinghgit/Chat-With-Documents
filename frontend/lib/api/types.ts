@@ -4,6 +4,7 @@ export interface User {
   email: string;
   full_name?: string;
   is_active: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -74,6 +75,33 @@ export interface Document {
 export interface DocumentListResponse {
   total: number;
   documents: Document[];
+}
+
+// ─── Admin / Usage Analytics ──────────────────────────────────────────────────
+export interface UsageTotals {
+  total_requests: number;
+  total_prompt_tokens: number;
+  total_completion_tokens: number;
+  avg_latency_ms: number;
+}
+
+export interface UsageByUser {
+  user_id: string | null;
+  email: string | null;
+  requests: number;
+  total_tokens: number;
+}
+
+export interface UsageByDay {
+  date: string;
+  requests: number;
+  total_tokens: number;
+}
+
+export interface AdminStats {
+  totals: UsageTotals;
+  by_user: UsageByUser[];
+  by_day: UsageByDay[];
 }
 
 // ─── Generic ─────────────────────────────────────────────────────────────────

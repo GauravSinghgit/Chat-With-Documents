@@ -17,6 +17,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: Optional[str]
     is_active: bool
+    is_admin: bool = False
     created_at: datetime
 
     class Config:
@@ -107,6 +108,34 @@ class DocumentResponse(BaseModel):
 class DocumentListResponse(BaseModel):
     total: int
     documents: List[DocumentResponse]
+
+
+# ─── Admin / Usage Analytics ──────────────────────────────────────────────────
+
+class UsageTotals(BaseModel):
+    total_requests: int
+    total_prompt_tokens: int
+    total_completion_tokens: int
+    avg_latency_ms: float
+
+
+class UsageByUser(BaseModel):
+    user_id: Optional[str]
+    email: Optional[str]
+    requests: int
+    total_tokens: int
+
+
+class UsageByDay(BaseModel):
+    date: str
+    requests: int
+    total_tokens: int
+
+
+class AdminStatsResponse(BaseModel):
+    totals: UsageTotals
+    by_user: List[UsageByUser]
+    by_day: List[UsageByDay]
 
 
 # ─── Health ───────────────────────────────────────────────────────────────────

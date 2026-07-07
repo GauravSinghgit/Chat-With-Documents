@@ -71,6 +71,7 @@ frontend/out/
 # Next.js cache
 .swc/
 frontend/.swc/
+*.tsbuildinfo
 
 # Vercel
 .vercel/

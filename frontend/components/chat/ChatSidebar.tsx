@@ -25,6 +25,7 @@ import {
   Moon,
   Sun,
   Bot,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -33,9 +34,10 @@ interface ChatSidebarProps {
   activeConversationId?: string;
   onLogout: () => void;
   userName?: string;
+  isAdmin?: boolean;
 }
 
-export function ChatSidebar({ activeConversationId, onLogout, userName }: ChatSidebarProps) {
+export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin }: ChatSidebarProps) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -157,6 +159,14 @@ export function ChatSidebar({ activeConversationId, onLogout, userName }: ChatSi
             Documents
           </Button>
         </Link>
+        {isAdmin && (
+          <Link href="/admin">
+            <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Admin
+            </Button>
+          </Link>
+        )}
         <Button
           variant="ghost"
           size="sm"

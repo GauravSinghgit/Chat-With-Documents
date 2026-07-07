@@ -6,15 +6,17 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ChatLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace("/login");
+    } else if (!loading && isAuthenticated && !user?.is_admin) {
+      router.replace("/chat");
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, user, router]);
 
   if (loading) {
     return (
@@ -29,7 +31,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated || !user?.is_admin) return null;
 
   const handleLogout = async () => {
     await logout();

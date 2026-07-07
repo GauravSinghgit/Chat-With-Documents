@@ -87,7 +87,7 @@ class AgentService:
             context = self.tool_service.rag_service.retrieve(question, k=3)
             prompt = build_chat_prompt(message=question, history=[], context=context)
             answer = await self.llm_service.generate(prompt)
-            return {"answer": answer, "thoughts": [answer], "tool_calls": []}
+            return {"answer": answer, "thoughts": [answer], "tool_calls": [], "usage": {}}
 
         messages = result["messages"]
         final = messages[-1]
@@ -95,12 +95,22 @@ class AgentService:
 
         thoughts: List[str] = []
         tool_calls: List[Dict[str, Any]] = []
+        prompt_tokens = 0
+        completion_tokens = 0
         for m in messages:
             if isinstance(m, AIMessage):
                 if m.content:
                     thoughts.append(m.content)
                 for tc in m.tool_calls or []:
                     tool_calls.append({"tool": tc["name"], "input": tc["args"]})
+                usage = getattr(m, "usage_metadata", None) or {}
+                prompt_tokens += usage.get("input_tokens", 0)
+                completion_tokens += usage.get("output_tokens", 0)
 
         logger.info(f"Agent completed for conv {conversation_id} with {len(tool_calls)} tool calls")
-        return {"answer": answer, "thoughts": thoughts, "tool_calls": tool_calls}
+        return {
+            "answer": answer,
+            "thoughts": thoughts,
+            "tool_calls": tool_calls,
+            "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens},
+        }

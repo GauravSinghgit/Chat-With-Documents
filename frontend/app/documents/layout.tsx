@@ -38,7 +38,7 @@ export default function DocumentsLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <ChatSidebar onLogout={handleLogout} userName={user?.email} />
+      <ChatSidebar onLogout={handleLogout} userName={user?.email} isAdmin={user?.is_admin} />
       <main className="flex-1 overflow-hidden">{children}</main>
     </div>
   );

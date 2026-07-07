@@ -1,4 +1,5 @@
 import json
+import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
@@ -25,6 +26,7 @@ from app.utils.security import sanitize_input, mask_pii
 from app.utils.prompts import build_chat_prompt
 from app.utils.rate_limit import limiter
 from app.utils.logger import logger
+from app.utils.usage import record_usage
 
 router = APIRouter(tags=["chat"])
 
@@ -61,11 +63,20 @@ async def chat(
 
     history = memory_service.get_history(db, body.conversation_id, limit=10)
 
+    start = time.perf_counter()
+
     # ── Agentic loop ──────────────────────────────────────────────────────────
     if body.use_agent:
         result = await agent_service.run(masked, body.conversation_id, db)
         response_text = result["answer"]
         memory_service.add_message(db, body.conversation_id, "assistant", response_text)
+        usage = result.get("usage", {})
+        record_usage(
+            db, current_user.id if current_user else None, body.conversation_id, "agent",
+            latency_ms=int((time.perf_counter() - start) * 1000),
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+        )
         logger.info(f"Agent response for conv {body.conversation_id}")
         return ChatResponse(
             conversation_id=body.conversation_id,
@@ -88,9 +99,15 @@ async def chat(
         tool_results=tool_results,
     )
 
-    response_text = await llm_service.generate(prompt)
+    response_text, usage = await llm_service.generate_with_usage(prompt)
     memory_service.add_message(db, body.conversation_id, "assistant", response_text)
     _maybe_set_title(db, body.conversation_id, sanitized)
+    record_usage(
+        db, current_user.id if current_user else None, body.conversation_id, "chat",
+        latency_ms=int((time.perf_counter() - start) * 1000),
+        prompt_tokens=usage.get("prompt_tokens", 0),
+        completion_tokens=usage.get("completion_tokens", 0),
+    )
 
     logger.info(f"Chat response for conv {body.conversation_id} (rag={body.use_rag})")
     return ChatResponse(
@@ -137,6 +154,7 @@ async def chat_stream(
     )
 
     sources_payload = [{"content": s["content"][:200], "score": s["score"]} for s in sources]
+    start = time.perf_counter()
 
     async def event_generator():
         full_response = ""
@@ -151,6 +169,10 @@ async def chat_stream(
 
         memory_service.add_message(db, body.conversation_id, "assistant", full_response)
         _maybe_set_title(db, body.conversation_id, sanitized)
+        record_usage(
+            db, current_user.id if current_user else None, body.conversation_id, "chat_stream",
+            latency_ms=int((time.perf_counter() - start) * 1000),
+        )
 
         done = {
             "type": "done",

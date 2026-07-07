@@ -10,7 +10,7 @@ from slowapi import _rate_limit_exceeded_handler
 from app.config import settings
 from app.database import init_db
 from app.api import chat, documents, health
-from app.api import auth, conversations
+from app.api import admin, auth, conversations
 from app.utils.rate_limit import limiter
 from app.utils.logger import logger
 
@@ -19,7 +19,6 @@ from app.utils.logger import logger
 async def lifespan(app: FastAPI):
     # Create required directories
     os.makedirs("data/documents", exist_ok=True)
-    os.makedirs("data/vectorstore", exist_ok=True)
     os.makedirs("data/logs", exist_ok=True)
     # Initialize database tables
     init_db()
@@ -56,6 +55,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(conversations.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 
 # ─── Global error handler ─────────────────────────────────────────────────────
