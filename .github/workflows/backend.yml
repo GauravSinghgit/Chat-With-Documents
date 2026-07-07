@@ -1,0 +1,55 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "alembic/**"
+      - "tests/**"
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - "alembic/**"
+      - "tests/**"
+      - "requirements*.txt"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: test-groq-key
+      JWT_SECRET: test-ci-secret-do-not-use-in-production
+      DATABASE_URL: sqlite:///:memory:
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (ruff)
+        run: ruff format --check .
+
+      - name: Type check (mypy)
+        run: mypy app
+
+      - name: Run tests
+        run: pytest --cov=app --cov-report=term-missing

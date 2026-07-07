@@ -1,5 +1,8 @@
 # AI Assistant Platform v2.0
 
+[![Backend CI](https://github.com/GauravSinghgit/AI-ASSISTANT-PLATFORM/actions/workflows/backend.yml/badge.svg)](https://github.com/GauravSinghgit/AI-ASSISTANT-PLATFORM/actions/workflows/backend.yml)
+[![Frontend CI](https://github.com/GauravSinghgit/AI-ASSISTANT-PLATFORM/actions/workflows/frontend.yml/badge.svg)](https://github.com/GauravSinghgit/AI-ASSISTANT-PLATFORM/actions/workflows/frontend.yml)
+
 A production-ready AI assistant with RAG, streaming chat, JWT auth, agentic tools, and a full Next.js + shadcn/ui frontend.
 
 ---
