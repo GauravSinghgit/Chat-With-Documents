@@ -9,21 +9,18 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("auth_user");
-    const token = localStorage.getItem("auth_token");
-    if (stored && token) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {}
-    }
-    setLoading(false);
+    // The access token lives in an httpOnly cookie (not readable from JS),
+    // so auth state is derived by asking the backend who the cookie
+    // belongs to, rather than reading anything out of local storage.
+    authApi.me().then((result) => {
+      setUser(result.ok ? result.data : null);
+      setLoading(false);
+    });
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const result = await authApi.login(email, password);
     if (!result.ok) return { ok: false as const, error: result.error };
-    localStorage.setItem("auth_token", result.data.access_token);
-    localStorage.setItem("auth_user", JSON.stringify(result.data.user));
     setUser(result.data.user);
     return { ok: true as const };
   }, []);

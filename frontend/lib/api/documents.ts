@@ -1,29 +1,18 @@
 import type { DocumentListResponse, Document, ApiResult } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("auth_token");
-}
-
 export const documentsApi = {
   async upload(
     files: File[],
     generateSummary = true
   ): Promise<ApiResult<{ ingested: number; results: unknown[] }>> {
-    const token = getToken();
     const formData = new FormData();
     files.forEach((f) => formData.append("files", f));
 
-    const res = await fetch(
-      `${BASE_URL}/api/documents/ingest?generate_summary=${generateSummary}`,
-      {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      }
-    );
+    const res = await fetch(`/api/documents/ingest?generate_summary=${generateSummary}`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
 
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
@@ -38,15 +27,12 @@ export const documentsApi = {
   },
 
   async list(page = 1, pageSize = 20, fileType?: string): Promise<ApiResult<DocumentListResponse>> {
-    const token = getToken();
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     if (fileType) params.append("file_type", fileType);
 
-    const res = await fetch(`${BASE_URL}/api/documents?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    const res = await fetch(`/api/documents?${params}`, {
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!res.ok) {
@@ -57,12 +43,9 @@ export const documentsApi = {
   },
 
   async get(id: number): Promise<ApiResult<Document>> {
-    const token = getToken();
-    const res = await fetch(`${BASE_URL}/api/documents/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    const res = await fetch(`/api/documents/${id}`, {
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
     });
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, status: res.status };
     const data = await res.json();
@@ -70,10 +53,9 @@ export const documentsApi = {
   },
 
   async delete(id: number): Promise<ApiResult<null>> {
-    const token = getToken();
-    const res = await fetch(`${BASE_URL}/api/documents/${id}`, {
+    const res = await fetch(`/api/documents/${id}`, {
       method: "DELETE",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
     });
     if (!res.ok && res.status !== 204) {
       return { ok: false, error: `HTTP ${res.status}`, status: res.status };
@@ -82,13 +64,10 @@ export const documentsApi = {
   },
 
   async reindex(id: number): Promise<ApiResult<{ document_id: number; chunks: number; status: string }>> {
-    const token = getToken();
-    const res = await fetch(`${BASE_URL}/api/documents/${id}/reindex`, {
+    const res = await fetch(`/api/documents/${id}/reindex`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
     });
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, status: res.status };
     const data = await res.json();

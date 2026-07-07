@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -73,17 +73,34 @@ def get_agent_service(
 
 # ─── Auth Dependencies ────────────────────────────────────────────────────────
 
+def _extract_token(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials],
+) -> Optional[str]:
+    """The browser frontend authenticates via the httpOnly access_token
+    cookie; API clients (Swagger UI, curl, scripts) may still use a
+    Bearer header. Cookie takes precedence when both are present."""
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
+    if credentials:
+        return credentials.credentials
+    return None
+
+
 async def get_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
-    if not credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    payload = decode_access_token(credentials.credentials)
+    payload = decode_access_token(token)
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -97,13 +114,15 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> Optional[User]:
     """Returns None if no/invalid token — used for optional auth endpoints."""
-    if not credentials:
+    token = _extract_token(request, credentials)
+    if not token:
         return None
-    payload = decode_access_token(credentials.credentials)
+    payload = decode_access_token(token)
     if not payload:
         return None
     return db.query(User).filter(User.id == payload.get("sub")).first()

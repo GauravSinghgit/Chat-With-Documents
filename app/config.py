@@ -6,6 +6,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
+    # Set DEBUG=false in any real deployment — disables the `secure` cookie
+    # flag locally over plain http, and must never be left on in production.
+    DEBUG: bool = True
+
     # LLM
     MODEL: str = "llama-3.3-70b-versatile"
     GROQ_API_KEY: str
@@ -48,8 +52,10 @@ class Settings(BaseSettings):
     # Security / PII
     PII_MASKING_ENABLED: bool = True
 
-    # JWT Auth
-    JWT_SECRET: str = "change-this-to-a-very-long-random-secret-key-in-production"
+    # JWT Auth — no default: must be set explicitly (env var or .env) so a
+    # forgotten secret fails startup loudly instead of silently using a
+    # publicly-known value.
+    JWT_SECRET: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 

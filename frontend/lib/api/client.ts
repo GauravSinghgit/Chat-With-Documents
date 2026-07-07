@@ -1,31 +1,24 @@
 import type { ApiResult } from "./types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("auth_token");
-}
+// Requests go to relative /api/* paths, proxied same-origin to the FastAPI
+// backend via next.config.ts's rewrites() (both in dev and prod). This keeps
+// the httpOnly auth cookie same-site from the browser's perspective even
+// though the frontend (Vercel) and backend (Render) are different origins.
 
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResult<T>> {
-  const token = getToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
+    const res = await fetch(endpoint, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -61,16 +54,11 @@ export async function streamRequest(
   onError: (msg: string) => void,
   signal?: AbortSignal
 ) {
-  const token = getToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
+    const res = await fetch(endpoint, {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(body),
       signal,
     });
