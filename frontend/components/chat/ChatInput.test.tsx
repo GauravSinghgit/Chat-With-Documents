@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ChatInput } from "./ChatInput";
 
 vi.mock("@/lib/api/documents", () => ({
-  documentsApi: { list: vi.fn().mockResolvedValue({ ok: true, data: { total: 0, documents: [] } }) },
+  documentsApi: {
+    list: vi.fn().mockResolvedValue({ ok: true, data: { total: 0, documents: [] } }),
+  },
 }));
 
 function setup(overrides: Partial<React.ComponentProps<typeof ChatInput>> = {}) {
@@ -72,10 +74,7 @@ describe("ChatInput", () => {
     await userEvent.type(textarea, "test");
     await userEvent.click(screen.getByTitle("Send (Enter)"));
 
-    expect(onSend).toHaveBeenCalledWith(
-      "test",
-      expect.objectContaining({ use_agent: true })
-    );
+    expect(onSend).toHaveBeenCalledWith("test", expect.objectContaining({ use_agent: true }));
   });
 
   it("shows a stop button instead of send while streaming", () => {

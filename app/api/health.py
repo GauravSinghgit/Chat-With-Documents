@@ -1,14 +1,16 @@
-import os
 from fastapi import APIRouter, Depends
-from app.schemas import HealthResponse
+
 from app.dependencies import get_vectorstore_service
+from app.schemas import HealthResponse
 from app.services.vectorstore import VectorStoreService
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check(vectorstore: VectorStoreService = Depends(get_vectorstore_service)):
+async def health_check(
+    vectorstore: VectorStoreService = Depends(get_vectorstore_service),
+) -> HealthResponse:
     stats = vectorstore.get_stats()
     return HealthResponse(
         status="ok",

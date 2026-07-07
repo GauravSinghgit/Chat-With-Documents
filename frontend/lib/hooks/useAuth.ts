@@ -25,12 +25,15 @@ export function useAuth() {
     return { ok: true as const };
   }, []);
 
-  const register = useCallback(async (email: string, password: string, full_name?: string) => {
-    const result = await authApi.register({ email, password, full_name });
-    if (!result.ok) return { ok: false as const, error: result.error };
-    // Auto-login after register
-    return login(email, password);
-  }, [login]);
+  const register = useCallback(
+    async (email: string, password: string, full_name?: string) => {
+      const result = await authApi.register({ email, password, full_name });
+      if (!result.ok) return { ok: false as const, error: result.error };
+      // Auto-login after register
+      return login(email, password);
+    },
+    [login]
+  );
 
   const logout = useCallback(async () => {
     await authApi.logout();

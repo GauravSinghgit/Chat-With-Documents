@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,10 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import User
-from app.schemas import UserCreate, UserResponse, Token
-from app.utils.auth_utils import hash_password, verify_password, create_access_token
 from app.dependencies import get_current_user
+from app.models import User
+from app.schemas import Token, UserCreate, UserResponse
+from app.utils.auth_utils import create_access_token, hash_password, verify_password
 from app.utils.logger import logger
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -31,7 +32,7 @@ def _set_auth_cookie(response: Response, token: str) -> None:
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+async def register(user_data: UserCreate, db: Session = Depends(get_db)) -> User:
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -54,7 +55,7 @@ async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-):
+) -> dict[str, Any]:
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -77,11 +78,11 @@ async def login(
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(current_user: User = Depends(get_current_user)):
+async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(response: Response) -> dict[str, str]:
     response.delete_cookie(key=COOKIE_NAME, path="/")
     return {"message": "Logged out successfully"}

@@ -1,5 +1,6 @@
 """Unit tests for the LangGraph agent (app/services/agent.py) — ChatGroq is
 monkeypatched so these run with no network access and no Groq API key."""
+
 import pytest
 from langchain_core.messages import AIMessage
 
@@ -33,9 +34,7 @@ class FakeMemoryService:
 
 
 def _make_agent_service(responses, monkeypatch):
-    monkeypatch.setattr(
-        "app.services.agent.ChatGroq", lambda **kwargs: FakeChatModel(responses)
-    )
+    monkeypatch.setattr("app.services.agent.ChatGroq", lambda **kwargs: FakeChatModel(responses))
     tool_service = ToolService(
         rag_service=RAGService(vectorstore_service=FakeVectorStore()),
         memory_service=FakeMemoryService(),
@@ -85,9 +84,7 @@ class _RaisingChatModel:
 
 @pytest.mark.asyncio
 async def test_agent_falls_back_to_rag_answer_on_tool_call_error(monkeypatch):
-    monkeypatch.setattr(
-        "app.services.agent.ChatGroq", lambda **kwargs: _RaisingChatModel()
-    )
+    monkeypatch.setattr("app.services.agent.ChatGroq", lambda **kwargs: _RaisingChatModel())
 
     class FakeLLM:
         async def generate(self, prompt):

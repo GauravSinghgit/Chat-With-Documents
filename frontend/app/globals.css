@@ -55,7 +55,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
@@ -68,7 +70,7 @@
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
+  @apply rounded-full bg-border;
 }
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/40;
@@ -77,21 +79,22 @@
 /* Streaming cursor */
 .streaming-cursor::after {
   content: "▋";
-  @apply animate-blink ml-0.5 text-primary;
+  @apply ml-0.5 animate-blink text-primary;
 }
 
 /* Message prose */
 .message-content pre {
-  @apply bg-muted rounded-md p-3 overflow-x-auto text-sm my-2;
+  @apply my-2 overflow-x-auto rounded-md bg-muted p-3 text-sm;
 }
 .message-content code {
-  @apply bg-muted rounded px-1 py-0.5 text-sm font-mono;
+  @apply rounded bg-muted px-1 py-0.5 font-mono text-sm;
 }
 .message-content p {
   @apply mb-2 last:mb-0;
 }
-.message-content ul, .message-content ol {
-  @apply pl-4 mb-2;
+.message-content ul,
+.message-content ol {
+  @apply mb-2 pl-4;
 }
 .message-content li {
   @apply mb-1;

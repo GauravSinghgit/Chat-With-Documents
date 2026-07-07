@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loading) {
     return (
       <div className="flex h-screen">
-        <div className="w-64 border-r p-4 space-y-3">
+        <div className="w-64 space-y-3 border-r p-4">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-3/4" />

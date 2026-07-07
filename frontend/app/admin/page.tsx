@@ -47,7 +47,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto p-6 space-y-4">
+      <div className="h-full space-y-4 overflow-y-auto p-6">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -66,7 +66,7 @@ export default function AdminPage() {
   const { totals, by_user, by_day } = stats;
 
   return (
-    <div className="h-full overflow-y-auto p-6 space-y-6">
+    <div className="h-full space-y-6 overflow-y-auto p-6">
       <div>
         <h1 className="text-xl font-semibold">Usage Analytics</h1>
         <p className="text-sm text-muted-foreground">Last 30 days</p>
@@ -74,10 +74,7 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Total Requests" value={totals.total_requests.toLocaleString()} />
-        <StatCard
-          label="Prompt Tokens"
-          value={totals.total_prompt_tokens.toLocaleString()}
-        />
+        <StatCard label="Prompt Tokens" value={totals.total_prompt_tokens.toLocaleString()} />
         <StatCard
           label="Completion Tokens"
           value={totals.total_completion_tokens.toLocaleString()}
@@ -154,7 +151,9 @@ export default function AdminPage() {
                   <TableRow key={row.user_id ?? "anonymous"}>
                     <TableCell>{row.email ?? "Anonymous"}</TableCell>
                     <TableCell className="text-right">{row.requests}</TableCell>
-                    <TableCell className="text-right">{row.total_tokens.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {row.total_tokens.toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

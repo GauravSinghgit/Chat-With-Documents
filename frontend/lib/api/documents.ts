@@ -63,7 +63,9 @@ export const documentsApi = {
     return { ok: true, data: null };
   },
 
-  async reindex(id: number): Promise<ApiResult<{ document_id: number; chunks: number; status: string }>> {
+  async reindex(
+    id: number
+  ): Promise<ApiResult<{ document_id: number; chunks: number; status: string }>> {
     const res = await fetch(`/api/documents/${id}/reindex`, {
       method: "POST",
       credentials: "include",

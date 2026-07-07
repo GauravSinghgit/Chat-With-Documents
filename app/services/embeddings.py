@@ -7,5 +7,5 @@ class EmbeddingService:
     """Wraps the configured sentence-transformers model behind LangChain's
     Embeddings interface so it plugs directly into the PGVector store."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)

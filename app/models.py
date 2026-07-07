@@ -1,71 +1,79 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Float
-from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+from sqlalchemy import ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
-    is_admin = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=utcnow)
+    id: Mapped[str] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    hashed_password: Mapped[str]
+    full_name: Mapped[str | None] = mapped_column(default=None)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
-    conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    documents: Mapped[list["Document"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    title = Column(String, nullable=True, default="New Conversation")
-    created_at = Column(DateTime, default=utcnow)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+    id: Mapped[str] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), default=None)
+    title: Mapped[str | None] = mapped_column(default="New Conversation")
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 
-    user = relationship("User", back_populates="conversations")
-    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+    user: Mapped["User | None"] = relationship(back_populates="conversations")
+    messages: Mapped[list["Message"]] = relationship(
+        back_populates="conversation", cascade="all, delete-orphan"
+    )
 
 
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(Integer, primary_key=True, index=True)
-    conversation_id = Column(String, ForeignKey("conversations.id"))
-    role = Column(String)  # "user" | "assistant" | "system"
-    content = Column(Text)
-    timestamp = Column(DateTime, default=utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))
+    role: Mapped[str]  # "user" | "assistant" | "system"
+    content: Mapped[str] = mapped_column(Text)
+    timestamp: Mapped[datetime] = mapped_column(default=utcnow)
 
-    conversation = relationship("Conversation", back_populates="messages")
+    conversation: Mapped["Conversation"] = relationship(back_populates="messages")
 
 
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    filename = Column(String, index=True)
-    original_filename = Column(String)
-    file_type = Column(String)  # "pdf" | "txt"
-    file_size = Column(Integer, default=0)  # bytes
-    content = Column(Text)
-    chunk_count = Column(Integer, default=0)
-    page_count = Column(Integer, default=0)
-    status = Column(String, default="indexed")  # "processing" | "indexed" | "failed"
-    summary = Column(Text, nullable=True)
-    file_metadata = Column("metadata", Text)
-    created_at = Column(DateTime, default=utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), default=None)
+    filename: Mapped[str] = mapped_column(index=True)
+    original_filename: Mapped[str | None] = mapped_column(default=None)
+    file_type: Mapped[str | None] = mapped_column(default=None)  # "pdf" | "txt"
+    file_size: Mapped[int] = mapped_column(default=0)  # bytes
+    content: Mapped[str] = mapped_column(Text)
+    chunk_count: Mapped[int] = mapped_column(default=0)
+    page_count: Mapped[int] = mapped_column(default=0)
+    status: Mapped[str] = mapped_column(default="indexed")  # "processing"|"indexed"|"failed"
+    summary: Mapped[str | None] = mapped_column(Text, default=None)
+    file_metadata: Mapped[str | None] = mapped_column("metadata", Text, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
-    user = relationship("User", back_populates="documents")
+    user: Mapped["User | None"] = relationship(back_populates="documents")
 
 
 class UsageEvent(Base):
@@ -73,12 +81,12 @@ class UsageEvent(Base):
 
     __tablename__ = "usage_events"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
-    conversation_id = Column(String, nullable=True)
-    event_type = Column(String, nullable=False)  # "chat" | "agent" | "doc_upload"
-    model = Column(String, nullable=True)
-    prompt_tokens = Column(Integer, default=0)
-    completion_tokens = Column(Integer, default=0)
-    latency_ms = Column(Integer, default=0)
-    created_at = Column(DateTime, default=utcnow, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), default=None)
+    conversation_id: Mapped[str | None] = mapped_column(default=None)
+    event_type: Mapped[str]  # "chat" | "agent" | "doc_upload"
+    model: Mapped[str | None] = mapped_column(default=None)
+    prompt_tokens: Mapped[int] = mapped_column(default=0)
+    completion_tokens: Mapped[int] = mapped_column(default=0)
+    latency_ms: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow, index=True)

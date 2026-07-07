@@ -37,7 +37,14 @@ function formatBytes(bytes: number): string {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode; label: string }> = {
+  const map: Record<
+    string,
+    {
+      variant: "default" | "secondary" | "destructive" | "outline";
+      icon: React.ReactNode;
+      label: string;
+    }
+  > = {
     indexed: { variant: "default", icon: <CheckCircle className="h-3 w-3" />, label: "Indexed" },
     processing: { variant: "secondary", icon: <Clock className="h-3 w-3" />, label: "Processing" },
     failed: { variant: "destructive", icon: <AlertCircle className="h-3 w-3" />, label: "Failed" },
@@ -129,10 +136,12 @@ export default function DocumentsPage() {
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="border-b bg-background px-6 py-4 flex items-center gap-4">
+      <header className="flex items-center gap-4 border-b bg-background px-6 py-4">
         <div>
           <h1 className="text-lg font-semibold">Knowledge Base</h1>
-          <p className="text-xs text-muted-foreground">{total} document{total !== 1 ? "s" : ""} indexed</p>
+          <p className="text-xs text-muted-foreground">
+            {total} document{total !== 1 ? "s" : ""} indexed
+          </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchDocs} className="gap-2">
@@ -165,12 +174,14 @@ export default function DocumentsPage() {
 
       {/* Upload hint */}
       <div
-        className="mx-6 mt-4 rounded-lg border-2 border-dashed border-border bg-muted/30 px-6 py-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+        className="mx-6 mt-4 cursor-pointer rounded-lg border-2 border-dashed border-border bg-muted/30 px-6 py-8 text-center transition-colors hover:bg-muted/50"
         onClick={() => fileInputRef.current?.click()}
       >
-        <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+        <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
         <p className="text-sm font-medium">Drop files here or click to upload</p>
-        <p className="text-xs text-muted-foreground mt-1">Supports PDF, TXT, MD — max 10 MB per file</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Supports PDF, TXT, MD — max 10 MB per file
+        </p>
       </div>
 
       <Separator className="mt-4" />
@@ -184,7 +195,7 @@ export default function DocumentsPage() {
             ))}
           </div>
         ) : documents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <FileText className="h-12 w-12 text-muted-foreground/50" />
             <h2 className="font-semibold">No documents yet</h2>
             <p className="text-sm text-muted-foreground">
@@ -194,10 +205,10 @@ export default function DocumentsPage() {
         ) : (
           <div className="space-y-3">
             {documents.map((doc) => (
-              <Card key={doc.id} className="hover:shadow-sm transition-shadow">
+              <Card key={doc.id} className="transition-shadow hover:shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="rounded-md bg-primary/10 p-2 shrink-0">
+                    <div className="shrink-0 rounded-md bg-primary/10 p-2">
                       {doc.file_type === "pdf" ? (
                         <FileType2 className="h-5 w-5 text-primary" />
                       ) : (
@@ -205,9 +216,9 @@ export default function DocumentsPage() {
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium truncate text-sm">{doc.original_filename}</h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-medium">{doc.original_filename}</h3>
                         <StatusBadge status={doc.status} />
                         <Badge variant="outline" className="text-xs">
                           {doc.file_type.toUpperCase()}
@@ -215,10 +226,12 @@ export default function DocumentsPage() {
                       </div>
 
                       {doc.summary && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{doc.summary}</p>
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                          {doc.summary}
+                        </p>
                       )}
 
-                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{doc.chunk_count} chunks</span>
                         {doc.page_count > 1 && <span>{doc.page_count} pages</span>}
                         <span>{formatBytes(doc.file_size)}</span>
@@ -226,12 +239,12 @@ export default function DocumentsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex shrink-0 items-center gap-1">
                       {doc.status === "indexed" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 h-8 text-xs"
+                          className="h-8 gap-1.5 text-xs"
                           onClick={() => handleStartChat(doc)}
                         >
                           <MessageSquare className="h-3.5 w-3.5" />

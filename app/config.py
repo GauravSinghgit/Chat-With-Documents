@@ -1,11 +1,14 @@
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
-from typing import List
 from pathlib import Path
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
+
     # Set DEBUG=false in any real deployment — disables the `secure` cookie
     # flag locally over plain http, and must never be left on in production.
     DEBUG: bool = True
@@ -37,7 +40,7 @@ class Settings(BaseSettings):
         return v
 
     @property
-    def allowed_origins_list(self) -> List[str]:
+    def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
 
     # LLM Parameters
@@ -64,10 +67,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_DOCS: str = "10/minute"
 
     @property
-    def allowed_tools_list(self) -> List[str]:
+    def allowed_tools_list(self) -> list[str]:
         return [t.strip() for t in self.ALLOWED_TOOLS.split(",")]
 
-    class Config:
-        env_file = BASE_DIR / ".env"
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]  # required fields come from env/.env at runtime

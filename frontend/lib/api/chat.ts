@@ -17,10 +17,16 @@ export const chatApi = {
     return apiRequest(`/api/conversations/${conversationId}/messages`);
   },
 
-  async updateTitle(conversationId: string, title: string): Promise<ApiResult<{ id: string; title: string }>> {
-    return apiRequest(`/api/conversations/${conversationId}/title?title=${encodeURIComponent(title)}`, {
-      method: "PATCH",
-    });
+  async updateTitle(
+    conversationId: string,
+    title: string
+  ): Promise<ApiResult<{ id: string; title: string }>> {
+    return apiRequest(
+      `/api/conversations/${conversationId}/title?title=${encodeURIComponent(title)}`,
+      {
+        method: "PATCH",
+      }
+    );
   },
 
   async deleteConversation(conversationId: string): Promise<ApiResult<null>> {

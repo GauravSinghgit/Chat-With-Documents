@@ -1,6 +1,7 @@
 import ast
 import operator
-from typing import Any, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 from langchain_core.tools import tool
 from sqlalchemy.orm import Session
@@ -25,7 +26,7 @@ class ToolService:
         query: str,
         conversation_id: str,
         db: Session,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         results = []
 
         if "search_documents" in self.allowed_tools:
@@ -46,14 +47,19 @@ class ToolService:
 
         return results
 
-    def search_web(self, query: str, max_results: int = 5) -> List[Dict]:
+    def search_web(self, query: str, max_results: int = 5) -> list[dict]:
         """DuckDuckGo web search — free, no API key needed."""
         try:
             from duckduckgo_search import DDGS
+
             with DDGS() as ddgs:
                 raw = list(ddgs.text(query, max_results=max_results))
             results = [
-                {"title": r.get("title", ""), "snippet": r.get("body", ""), "url": r.get("href", "")}
+                {
+                    "title": r.get("title", ""),
+                    "snippet": r.get("body", ""),
+                    "url": r.get("href", ""),
+                }
                 for r in raw
             ]
             logger.debug(f"Web search for '{query}' → {len(results)} results")
@@ -65,25 +71,27 @@ class ToolService:
 
 # ─── LangGraph agent tools ─────────────────────────────────────────────────────
 
-_SAFE_OPS = {
+_BINARY_OPS: dict[type[ast.operator], Callable[[float, float], float]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
     ast.Div: operator.truediv,
     ast.Pow: operator.pow,
     ast.Mod: operator.mod,
+}
+_UNARY_OPS: dict[type[ast.unaryop], Callable[[float], float]] = {
     ast.USub: operator.neg,
 }
 
 
-def _safe_eval(node: ast.AST):
+def _safe_eval(node: ast.AST) -> float:
     """Evaluate a restricted arithmetic AST — no names, calls, or attribute access."""
-    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+    if isinstance(node, ast.Constant) and isinstance(node.value, int | float):
         return node.value
-    if isinstance(node, ast.BinOp) and type(node.op) in _SAFE_OPS:
-        return _SAFE_OPS[type(node.op)](_safe_eval(node.left), _safe_eval(node.right))
-    if isinstance(node, ast.UnaryOp) and type(node.op) in _SAFE_OPS:
-        return _SAFE_OPS[type(node.op)](_safe_eval(node.operand))
+    if isinstance(node, ast.BinOp) and type(node.op) in _BINARY_OPS:
+        return _BINARY_OPS[type(node.op)](_safe_eval(node.left), _safe_eval(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
+        return _UNARY_OPS[type(node.op)](_safe_eval(node.operand))
     raise ValueError("Unsupported expression")
 
 
@@ -92,7 +100,7 @@ def build_tools(
     llm_service: LLMService,
     db: Session,
     conversation_id: str,
-) -> List[Any]:
+) -> list[Any]:
     """Build the LangChain tool list bound to this request's services/context,
     for use by the LangGraph agent (app/services/agent.py)."""
 

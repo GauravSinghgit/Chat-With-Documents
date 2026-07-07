@@ -39,7 +39,12 @@ export interface ChatResponse {
 
 export type StreamEvent =
   | { type: "token"; token: string }
-  | { type: "done"; conversation_id: string; sources: Array<{ content: string; score: number }>; tool_calls: string[] }
+  | {
+      type: "done";
+      conversation_id: string;
+      sources: Array<{ content: string; score: number }>;
+      tool_calls: string[];
+    }
   | { type: "error"; message: string };
 
 // ─── Conversations ────────────────────────────────────────────────────────────
@@ -105,6 +110,4 @@ export interface AdminStats {
 }
 
 // ─── Generic ─────────────────────────────────────────────────────────────────
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; status: number };
+export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string; status: number };

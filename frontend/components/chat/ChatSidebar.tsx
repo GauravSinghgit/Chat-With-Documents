@@ -37,7 +37,12 @@ interface ChatSidebarProps {
   isAdmin?: boolean;
 }
 
-export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin }: ChatSidebarProps) {
+export function ChatSidebar({
+  activeConversationId,
+  onLogout,
+  userName,
+  isAdmin,
+}: ChatSidebarProps) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -96,7 +101,9 @@ export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin 
           </div>
         ) : conversations.length === 0 ? (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-            No conversations yet.<br />Start a new chat!
+            No conversations yet.
+            <br />
+            Start a new chat!
           </p>
         ) : (
           <div className="space-y-0.5 py-2">
@@ -107,15 +114,15 @@ export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin 
                   "group flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
                   activeConversationId === conv.id
                     ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50 cursor-pointer"
+                    : "cursor-pointer hover:bg-accent/50"
                 )}
                 onClick={() => router.push(`/chat/${conv.id}`)}
               >
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium leading-tight">
                     {truncate(conv.title || "New Chat", 28)}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
                     {formatDate(conv.updated_at)} · {conv.message_count} msgs
                   </p>
                 </div>
@@ -125,7 +132,7 @@ export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin 
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                      className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </Button>
@@ -152,7 +159,7 @@ export function ChatSidebar({ activeConversationId, onLogout, userName, isAdmin 
       <Separator />
 
       {/* Footer */}
-      <div className="p-3 space-y-1">
+      <div className="space-y-1 p-3">
         <Link href="/documents">
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
             <FileText className="h-4 w-4" />

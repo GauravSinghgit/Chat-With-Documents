@@ -1,22 +1,20 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.models import Conversation, Message, User
 from app.schemas import ConversationResponse, MessageResponse
-from app.dependencies import get_current_user
 from app.utils.logger import logger
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 
-@router.get("", response_model=List[ConversationResponse])
+@router.get("", response_model=list[ConversationResponse])
 async def list_conversations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[ConversationResponse]:
     convs = (
         db.query(Conversation)
         .filter(Conversation.user_id == current_user.id)
@@ -38,12 +36,12 @@ async def list_conversations(
     return result
 
 
-@router.get("/{conversation_id}/messages", response_model=List[MessageResponse])
+@router.get("/{conversation_id}/messages", response_model=list[MessageResponse])
 async def get_messages(
     conversation_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> list[Message]:
     conv = (
         db.query(Conversation)
         .filter(Conversation.id == conversation_id, Conversation.user_id == current_user.id)
@@ -67,7 +65,7 @@ async def update_title(
     title: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> dict[str, str | None]:
     conv = (
         db.query(Conversation)
         .filter(Conversation.id == conversation_id, Conversation.user_id == current_user.id)
@@ -85,7 +83,7 @@ async def delete_conversation(
     conversation_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+) -> None:
     conv = (
         db.query(Conversation)
         .filter(Conversation.id == conversation_id, Conversation.user_id == current_user.id)

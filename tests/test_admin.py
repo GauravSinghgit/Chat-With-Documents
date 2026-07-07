@@ -12,7 +12,12 @@ def test_stats_returns_usage_totals_for_admin(admin_client):
     # Generate one usage event via a real chat request (fake LLM under the hood).
     admin_client.post(
         "/api/chat",
-        json={"conversation_id": "admin-conv", "message": "hi", "use_rag": False, "use_tools": False},
+        json={
+            "conversation_id": "admin-conv",
+            "message": "hi",
+            "use_rag": False,
+            "use_tools": False,
+        },
     )
 
     res = admin_client.get("/api/admin/stats")

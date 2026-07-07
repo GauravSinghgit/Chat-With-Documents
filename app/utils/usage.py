@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -8,8 +6,8 @@ from app.models import UsageEvent
 
 def record_usage(
     db: Session,
-    user_id: Optional[str],
-    conversation_id: Optional[str],
+    user_id: str | None,
+    conversation_id: str | None,
     event_type: str,
     latency_ms: int,
     prompt_tokens: int = 0,

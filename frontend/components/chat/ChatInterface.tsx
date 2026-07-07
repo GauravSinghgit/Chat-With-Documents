@@ -41,20 +41,22 @@ export function ChatInterface({ conversationId, docName, docId }: ChatInterfaceP
       if (!cancelled && result.ok) loadMessages(result.data);
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [conversationId, loadMessages]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Focused doc banner */}
       {focusDoc && (
-        <div className="flex items-center gap-2 border-b bg-primary/5 px-4 py-2 text-xs text-primary shrink-0">
+        <div className="flex shrink-0 items-center gap-2 border-b bg-primary/5 px-4 py-2 text-xs text-primary">
           <FileText className="h-3.5 w-3.5 shrink-0" />
           <span className="font-medium">Focused on:</span>
           <span className="flex-1 truncate">{focusDoc.name}</span>
           <button
             onClick={() => setFocusDoc(null)}
-            className="text-muted-foreground hover:text-foreground transition-colors ml-1"
+            className="ml-1 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Clear document focus"
           >
             <X className="h-3.5 w-3.5" />
@@ -64,27 +66,30 @@ export function ChatInterface({ conversationId, docName, docId }: ChatInterfaceP
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+        <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full py-20 text-center gap-3">
+            <div className="flex h-full flex-col items-center justify-center gap-3 py-20 text-center">
               <div className="rounded-full bg-primary/10 p-4">
-                {focusDoc
-                  ? <FileText className="h-8 w-8 text-primary" />
-                  : <Bot className="h-8 w-8 text-primary" />
-                }
+                {focusDoc ? (
+                  <FileText className="h-8 w-8 text-primary" />
+                ) : (
+                  <Bot className="h-8 w-8 text-primary" />
+                )}
               </div>
               {focusDoc ? (
                 <>
-                  <h2 className="text-lg font-semibold">Ask about "{focusDoc.name}"</h2>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    Ask any question — I'll search this document and give you an accurate answer.
+                  <h2 className="text-lg font-semibold">Ask about &quot;{focusDoc.name}&quot;</h2>
+                  <p className="max-w-sm text-sm text-muted-foreground">
+                    Ask any question — I&apos;ll search this document and give you an accurate
+                    answer.
                   </p>
                 </>
               ) : (
                 <>
                   <h2 className="text-lg font-semibold">How can I help you today?</h2>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    Ask me anything. You can also pick a document below to ask focused questions about it.
+                  <p className="max-w-sm text-sm text-muted-foreground">
+                    Ask me anything. You can also pick a document below to ask focused questions
+                    about it.
                   </p>
                 </>
               )}
@@ -100,7 +105,7 @@ export function ChatInterface({ conversationId, docName, docId }: ChatInterfaceP
           ))}
 
           {error && (
-            <div className="text-center text-sm text-destructive bg-destructive/10 rounded-md py-2 px-4">
+            <div className="rounded-md bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
               {error}
             </div>
           )}

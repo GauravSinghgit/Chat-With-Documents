@@ -1,45 +1,37 @@
 from functools import lru_cache
-from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.config import Settings
 from app.database import get_db
 from app.models import User
-from app.services.llm import LLMService
+from app.services.agent import AgentService
 from app.services.embeddings import EmbeddingService
-from app.services.vectorstore import VectorStoreService
+from app.services.llm import LLMService
 from app.services.memory import MemoryService
 from app.services.rag import RAGService
 from app.services.tools import ToolService
-from app.services.agent import AgentService
+from app.services.vectorstore import VectorStoreService
 from app.utils.auth_utils import decode_access_token
 
 security = HTTPBearer(auto_error=False)
 
 
-# ─── Settings ────────────────────────────────────────────────────────────────
-
-@lru_cache()
-def get_settings():
-    return Settings()
-
-
 # ─── Services (singletons via lru_cache) ─────────────────────────────────────
 
-@lru_cache()
+
+@lru_cache
 def get_llm_service():
     return LLMService()
 
 
-@lru_cache()
+@lru_cache
 def get_embedding_service():
     return EmbeddingService()
 
 
-@lru_cache()
+@lru_cache
 def get_vectorstore_service():
     return VectorStoreService(embedding_service=get_embedding_service())
 
@@ -73,10 +65,11 @@ def get_agent_service(
 
 # ─── Auth Dependencies ────────────────────────────────────────────────────────
 
+
 def _extract_token(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials],
-) -> Optional[str]:
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str | None:
     """The browser frontend authenticates via the httpOnly access_token
     cookie; API clients (Swagger UI, curl, scripts) may still use a
     Bearer header. Cookie takes precedence when both are present."""
@@ -90,7 +83,7 @@ def _extract_token(
 
 async def get_current_user(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
     token = _extract_token(request, credentials)
@@ -115,9 +108,9 @@ async def get_current_user(
 
 async def get_current_user_optional(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
-) -> Optional[User]:
+) -> User | None:
     """Returns None if no/invalid token — used for optional auth endpoints."""
     token = _extract_token(request, credentials)
     if not token:

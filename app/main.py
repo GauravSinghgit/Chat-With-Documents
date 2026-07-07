@@ -4,15 +4,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from app.api import admin, auth, chat, conversations, documents, health
 from app.config import settings
 from app.database import init_db
-from app.api import chat, documents, health
-from app.api import admin, auth, conversations
-from app.utils.rate_limit import limiter
 from app.utils.logger import logger
+from app.utils.rate_limit import limiter
 
 
 @asynccontextmanager
@@ -38,7 +37,7 @@ app = FastAPI(
 
 # ─── Rate Limiter ──────────────────────────────────────────────────────────────
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
@@ -60,7 +59,7 @@ app.include_router(admin.router, prefix="/api")
 
 # ─── Global error handler ─────────────────────────────────────────────────────
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.error(f"Unhandled exception on {request.url}: {exc}")
     return JSONResponse(
         status_code=500,

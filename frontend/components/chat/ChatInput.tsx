@@ -13,7 +13,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Send, Square, Globe, FileSearch, Bot, FileText, Upload, X, ChevronDown } from "lucide-react";
+import {
+  Send,
+  Square,
+  Globe,
+  FileSearch,
+  Bot,
+  FileText,
+  Upload,
+  X,
+  ChevronDown,
+} from "lucide-react";
 import { documentsApi } from "@/lib/api/documents";
 import type { Document } from "@/lib/api/types";
 
@@ -23,7 +33,10 @@ interface FocusDoc {
 }
 
 interface ChatInputProps {
-  onSend: (message: string, opts: { use_rag: boolean; use_tools: boolean; use_agent: boolean }) => void;
+  onSend: (
+    message: string,
+    opts: { use_rag: boolean; use_tools: boolean; use_agent: boolean }
+  ) => void;
   isStreaming: boolean;
   onCancel: () => void;
   disabled?: boolean;
@@ -73,9 +86,9 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t bg-background/95 backdrop-blur p-4">
+    <div className="border-t bg-background/95 p-4 backdrop-blur">
       {/* Options row */}
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <ToggleChip
           icon={<FileSearch className="h-3 w-3" />}
           label="RAG"
@@ -104,37 +117,33 @@ export function ChatInput({
             <button
               title="Focus on a specific document"
               className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors border max-w-[180px]",
+                "flex max-w-[180px] items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                 focusDoc
-                  ? "bg-primary/10 border-primary/30 text-primary"
-                  : "bg-muted border-transparent text-muted-foreground hover:text-foreground"
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-transparent bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
               <FileText className="h-3 w-3 shrink-0" />
-              <span className="truncate">
-                {focusDoc ? focusDoc.name : "Select Doc"}
-              </span>
+              <span className="truncate">{focusDoc ? focusDoc.name : "Select Doc"}</span>
               <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
             </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
               Focus chat on a document
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
             {!docsLoaded ? (
-              <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                Loading…
-              </div>
+              <div className="px-3 py-4 text-center text-xs text-muted-foreground">Loading…</div>
             ) : docs.length === 0 ? (
-              <div className="px-3 py-4 flex flex-col items-center gap-2 text-center">
+              <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
                 <Upload className="h-6 w-6 text-muted-foreground/50" />
                 <p className="text-xs text-muted-foreground">No documents uploaded yet.</p>
                 <Link
                   href="/documents"
-                  className="text-xs text-primary hover:underline font-medium"
+                  className="text-xs font-medium text-primary hover:underline"
                 >
                   Upload documents →
                 </Link>
@@ -146,7 +155,7 @@ export function ChatInput({
                     key={doc.id}
                     onClick={() => onDocSelect({ id: doc.id, name: doc.original_filename })}
                     className={cn(
-                      "gap-2 cursor-pointer",
+                      "cursor-pointer gap-2",
                       focusDoc?.id === doc.id && "bg-primary/5 text-primary"
                     )}
                   >
@@ -168,7 +177,7 @@ export function ChatInput({
                 )}
 
                 <DropdownMenuItem asChild>
-                  <Link href="/documents" className="gap-2 cursor-pointer">
+                  <Link href="/documents" className="cursor-pointer gap-2">
                     <Upload className="h-3.5 w-3.5" />
                     <span className="text-xs">Manage documents</span>
                   </Link>
@@ -180,14 +189,14 @@ export function ChatInput({
       </div>
 
       {/* Input row */}
-      <div className="flex gap-2 items-end">
+      <div className="flex items-end gap-2">
         <Textarea
           ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? "Type a message… (Enter to send, Shift+Enter for newline)"}
-          className="flex-1 min-h-[44px] max-h-[200px] resize-none"
+          className="max-h-[200px] min-h-[44px] flex-1 resize-none"
           disabled={disabled || isStreaming}
           rows={1}
         />
@@ -228,10 +237,10 @@ function ToggleChip({
       onClick={onClick}
       title={title}
       className={cn(
-        "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors border",
+        "flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
         active
-          ? "bg-primary/10 border-primary/30 text-primary"
-          : "bg-muted border-transparent text-muted-foreground hover:text-foreground"
+          ? "border-primary/30 bg-primary/10 text-primary"
+          : "border-transparent bg-muted text-muted-foreground hover:text-foreground"
       )}
     >
       {icon}

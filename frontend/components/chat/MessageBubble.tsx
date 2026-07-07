@@ -15,25 +15,24 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex gap-3 animate-fade-in", isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={cn("flex animate-fade-in gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
       {/* Avatar */}
-      <Avatar className="h-8 w-8 shrink-0 mt-1">
-        <AvatarFallback className={cn(
-          "text-xs",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted"
-        )}>
+      <Avatar className="mt-1 h-8 w-8 shrink-0">
+        <AvatarFallback
+          className={cn("text-xs", isUser ? "bg-primary text-primary-foreground" : "bg-muted")}
+        >
           {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </AvatarFallback>
       </Avatar>
 
       {/* Bubble */}
-      <div className={cn("flex flex-col gap-1 max-w-[75%]", isUser && "items-end")}>
+      <div className={cn("flex max-w-[75%] flex-col gap-1", isUser && "items-end")}>
         <div
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isUser
-              ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-muted text-foreground rounded-tl-sm"
+              ? "rounded-tr-sm bg-primary text-primary-foreground"
+              : "rounded-tl-sm bg-muted text-foreground"
           )}
         >
           {message.content ? (
@@ -46,18 +45,16 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
           ) : (
             isStreaming && (
               <span className="flex items-center gap-1 text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
               </span>
             )
           )}
-          {isStreaming && message.content && (
-            <span className="streaming-cursor" />
-          )}
+          {isStreaming && message.content && <span className="streaming-cursor" />}
         </div>
 
-        <span className="text-[11px] text-muted-foreground px-1">
+        <span className="px-1 text-[11px] text-muted-foreground">
           {formatTime(message.timestamp)}
         </span>
       </div>

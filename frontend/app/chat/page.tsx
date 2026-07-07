@@ -13,9 +13,10 @@ export default function ChatHomePage() {
         <Bot className="h-10 w-10 text-primary" />
       </div>
       <div>
-        <h1 className="text-2xl font-bold mb-2">AI Assistant Platform</h1>
-        <p className="text-muted-foreground max-w-md">
-          Start a new conversation, or upload documents to enable intelligent document search with RAG.
+        <h1 className="mb-2 text-2xl font-bold">AI Assistant Platform</h1>
+        <p className="max-w-md text-muted-foreground">
+          Start a new conversation, or upload documents to enable intelligent document search with
+          RAG.
         </p>
       </div>
       <div className="flex gap-3">

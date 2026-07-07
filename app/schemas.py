@@ -1,27 +1,27 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
-from typing import List, Optional, Dict, Any
-from datetime import datetime
 import os
+from datetime import datetime
+from typing import Any
 
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
+
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
-    full_name: Optional[str] = None
+    full_name: str | None = None
 
 
 class UserResponse(BaseModel):
     id: str
     email: str
-    full_name: Optional[str]
+    full_name: str | None
     is_active: bool
     is_admin: bool = False
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):
@@ -32,18 +32,19 @@ class Token(BaseModel):
 
 # ─── Conversation ─────────────────────────────────────────────────────────────
 
+
 class ConversationResponse(BaseModel):
     id: str
-    title: Optional[str]
+    title: str | None
     created_at: datetime
     updated_at: datetime
-    message_count: Optional[int] = 0
+    message_count: int | None = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ─── Message ─────────────────────────────────────────────────────────────────
+
 
 class MessageCreate(BaseModel):
     content: str
@@ -55,11 +56,11 @@ class MessageResponse(BaseModel):
     content: str
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ─── Chat ─────────────────────────────────────────────────────────────────────
+
 
 class ChatRequest(BaseModel):
     conversation_id: str
@@ -72,27 +73,28 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     conversation_id: str
     message: str
-    sources: Optional[List[Dict[str, Any]]] = None
-    tool_calls: Optional[List[str]] = None
-    agent_thoughts: Optional[List[str]] = None
+    sources: list[dict[str, Any]] | None = None
+    tool_calls: list[str] | None = None
+    agent_thoughts: list[str] | None = None
 
 
 # ─── Document ─────────────────────────────────────────────────────────────────
 
+
 class DocumentResponse(BaseModel):
     id: int
     filename: str
-    original_filename: Optional[str] = None
-    file_type: Optional[str] = None
+    original_filename: str | None = None
+    file_type: str | None = None
     file_size: int = 0
     chunk_count: int = 0
     page_count: int = 0
     status: str
-    summary: Optional[str] = None
+    summary: str | None = None
     created_at: datetime
 
     @model_validator(mode="after")
-    def fill_nullable_fields(self):
+    def fill_nullable_fields(self) -> "DocumentResponse":
         """Back-fill original_filename and file_type from filename for legacy rows."""
         if not self.original_filename:
             self.original_filename = self.filename or ""
@@ -101,16 +103,16 @@ class DocumentResponse(BaseModel):
             self.file_type = ext.lstrip(".") if ext else "unknown"
         return self
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DocumentListResponse(BaseModel):
     total: int
-    documents: List[DocumentResponse]
+    documents: list[DocumentResponse]
 
 
 # ─── Admin / Usage Analytics ──────────────────────────────────────────────────
+
 
 class UsageTotals(BaseModel):
     total_requests: int
@@ -120,8 +122,8 @@ class UsageTotals(BaseModel):
 
 
 class UsageByUser(BaseModel):
-    user_id: Optional[str]
-    email: Optional[str]
+    user_id: str | None
+    email: str | None
     requests: int
     total_tokens: int
 
@@ -134,13 +136,14 @@ class UsageByDay(BaseModel):
 
 class AdminStatsResponse(BaseModel):
     totals: UsageTotals
-    by_user: List[UsageByUser]
-    by_day: List[UsageByDay]
+    by_user: list[UsageByUser]
+    by_day: list[UsageByDay]
 
 
 # ─── Health ───────────────────────────────────────────────────────────────────
 
+
 class HealthResponse(BaseModel):
     status: str
     version: str = "2.0.0"
-    services: Optional[Dict[str, str]] = None
+    services: dict[str, str] | None = None

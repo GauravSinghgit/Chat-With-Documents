@@ -64,7 +64,7 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
-        "blink": {
+        blink: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0" },
         },
@@ -73,7 +73,7 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
-        "blink": "blink 1s step-end infinite",
+        blink: "blink 1s step-end infinite",
       },
     },
   },

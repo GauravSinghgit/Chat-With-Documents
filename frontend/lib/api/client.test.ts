@@ -7,9 +7,9 @@ describe("apiRequest", () => {
   });
 
   it("sends credentials: include so the httpOnly auth cookie is attached", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ hello: "world" }), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ hello: "world" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await apiRequest("/api/whoami");
@@ -24,9 +24,11 @@ describe("apiRequest", () => {
   it("returns ok:false with the server's detail message on non-2xx", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ detail: "Not authenticated" }), { status: 401 })
-      )
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ detail: "Not authenticated" }), { status: 401 })
+        )
     );
 
     const result = await apiRequest("/api/auth/me");
@@ -35,10 +37,7 @@ describe("apiRequest", () => {
   });
 
   it("returns ok:false on a network failure without throwing", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new TypeError("Failed to fetch"))
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
     const result = await apiRequest("/api/anything");
 

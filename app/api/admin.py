@@ -17,7 +17,7 @@ async def get_stats(
     days: int = 30,
     db: Session = Depends(get_db),
     _admin: User = Depends(get_current_admin_user),
-):
+) -> AdminStatsResponse:
     """Aggregate usage totals, per-user breakdown, and a requests-over-time
     series for the admin dashboard. Restricted to is_admin users."""
     since = date.today() - timedelta(days=days)
@@ -30,7 +30,7 @@ async def get_stats(
             func.coalesce(func.avg(UsageEvent.latency_ms), 0.0),
         )
         .filter(UsageEvent.created_at >= since)
-        .first()
+        .one()  # ungrouped aggregate always yields exactly one row (zeros if no matches)
     )
     totals = UsageTotals(
         total_requests=totals_row[0] or 0,
@@ -70,8 +70,7 @@ async def get_stats(
         .all()
     )
     by_day = [
-        UsageByDay(date=str(r[0]), requests=r[1], total_tokens=int(r[2] or 0))
-        for r in by_day_rows
+        UsageByDay(date=str(r[0]), requests=r[1], total_tokens=int(r[2] or 0)) for r in by_day_rows
     ]
 
     return AdminStatsResponse(totals=totals, by_user=by_user, by_day=by_day)

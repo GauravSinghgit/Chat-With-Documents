@@ -1,5 +1,6 @@
 """Postgres-backed vector store (pgvector via LangChain's PGVector)."""
-from typing import Any, Dict, List
+
+from typing import Any
 
 from langchain_postgres import PGVector
 
@@ -20,7 +21,7 @@ class VectorStoreService:
         )
         logger.info(f"Connected to pgvector collection '{COLLECTION_NAME}'")
 
-    def add_documents(self, texts: List[str], metadatas: List[Dict[str, Any]]) -> None:
+    def add_documents(self, texts: list[str], metadatas: list[dict[str, Any]]) -> None:
         self.store.add_texts(texts, metadatas=metadatas)
         logger.debug(f"Added {len(texts)} chunks to pgvector")
 
@@ -28,14 +29,14 @@ class VectorStoreService:
         self.store.delete(filter={"doc_id": doc_id})
         logger.info(f"Deleted vectors for doc_id={doc_id}")
 
-    def search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         results = self.store.similarity_search_with_score(query, k=k)
         return [
             {"content": doc.page_content, "metadata": doc.metadata, "score": float(score)}
             for doc, score in results
         ]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "collection": COLLECTION_NAME,
             "index_type": "pgvector (cosine similarity)",

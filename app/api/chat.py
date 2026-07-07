@@ -1,37 +1,37 @@
 import json
 import time
-from typing import Optional
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.schemas import ChatRequest, ChatResponse
 from app.database import get_db
-from app.models import Conversation, User
 from app.dependencies import (
+    get_agent_service,
+    get_current_user_optional,
     get_llm_service,
     get_memory_service,
     get_rag_service,
     get_tool_service,
-    get_agent_service,
-    get_current_user_optional,
 )
+from app.models import Conversation, User
+from app.schemas import ChatRequest, ChatResponse
+from app.services.agent import AgentService
 from app.services.llm import LLMService
 from app.services.memory import MemoryService
 from app.services.rag import RAGService
 from app.services.tools import ToolService
-from app.services.agent import AgentService
-from app.utils.security import sanitize_input, mask_pii
+from app.utils.logger import logger
 from app.utils.prompts import build_chat_prompt
 from app.utils.rate_limit import limiter
-from app.utils.logger import logger
+from app.utils.security import mask_pii, sanitize_input
 from app.utils.usage import record_usage
 
 router = APIRouter(tags=["chat"])
 
 
-def _link_conversation_to_user(db: Session, conversation_id: str, user: Optional[User]):
+def _link_conversation_to_user(db: Session, conversation_id: str, user: User | None) -> None:
     if user:
         conv = db.query(Conversation).filter_by(id=conversation_id).first()
         if conv and conv.user_id is None:
@@ -41,19 +41,20 @@ def _link_conversation_to_user(db: Session, conversation_id: str, user: Optional
 
 # ─── Standard Chat ─────────────────────────────────────────────────────────────
 
+
 @router.post("/chat", response_model=ChatResponse)
 @limiter.limit("30/minute")
 async def chat(
-    request: Request,           # FastAPI Request — required by slowapi
-    body: ChatRequest,          # actual JSON payload
+    request: Request,  # FastAPI Request — required by slowapi
+    body: ChatRequest,  # actual JSON payload
     db: Session = Depends(get_db),
     llm_service: LLMService = Depends(get_llm_service),
     memory_service: MemoryService = Depends(get_memory_service),
     rag_service: RAGService = Depends(get_rag_service),
     tool_service: ToolService = Depends(get_tool_service),
     agent_service: AgentService = Depends(get_agent_service),
-    current_user: Optional[User] = Depends(get_current_user_optional),
-):
+    current_user: User | None = Depends(get_current_user_optional),
+) -> ChatResponse:
     sanitized = sanitize_input(body.message)
     masked = mask_pii(sanitized)
 
@@ -72,7 +73,10 @@ async def chat(
         memory_service.add_message(db, body.conversation_id, "assistant", response_text)
         usage = result.get("usage", {})
         record_usage(
-            db, current_user.id if current_user else None, body.conversation_id, "agent",
+            db,
+            current_user.id if current_user else None,
+            body.conversation_id,
+            "agent",
             latency_ms=int((time.perf_counter() - start) * 1000),
             prompt_tokens=usage.get("prompt_tokens", 0),
             completion_tokens=usage.get("completion_tokens", 0),
@@ -88,8 +92,7 @@ async def chat(
     # ── Standard RAG + Tools ──────────────────────────────────────────────────
     sources = rag_service.retrieve(masked) if body.use_rag else []
     tool_results = (
-        tool_service.execute_safe_tools(masked, body.conversation_id, db)
-        if body.use_tools else []
+        tool_service.execute_safe_tools(masked, body.conversation_id, db) if body.use_tools else []
     )
 
     prompt = build_chat_prompt(
@@ -103,7 +106,10 @@ async def chat(
     memory_service.add_message(db, body.conversation_id, "assistant", response_text)
     _maybe_set_title(db, body.conversation_id, sanitized)
     record_usage(
-        db, current_user.id if current_user else None, body.conversation_id, "chat",
+        db,
+        current_user.id if current_user else None,
+        body.conversation_id,
+        "chat",
         latency_ms=int((time.perf_counter() - start) * 1000),
         prompt_tokens=usage.get("prompt_tokens", 0),
         completion_tokens=usage.get("completion_tokens", 0),
@@ -120,18 +126,19 @@ async def chat(
 
 # ─── Streaming Chat ─────────────────────────────────────────────────────────────
 
+
 @router.post("/chat/stream")
 @limiter.limit("30/minute")
 async def chat_stream(
-    request: Request,           # required by slowapi
+    request: Request,  # required by slowapi
     body: ChatRequest,
     db: Session = Depends(get_db),
     llm_service: LLMService = Depends(get_llm_service),
     memory_service: MemoryService = Depends(get_memory_service),
     rag_service: RAGService = Depends(get_rag_service),
     tool_service: ToolService = Depends(get_tool_service),
-    current_user: Optional[User] = Depends(get_current_user_optional),
-):
+    current_user: User | None = Depends(get_current_user_optional),
+) -> StreamingResponse:
     sanitized = sanitize_input(body.message)
     masked = mask_pii(sanitized)
 
@@ -142,8 +149,7 @@ async def chat_stream(
     history = memory_service.get_history(db, body.conversation_id, limit=10)
     sources = rag_service.retrieve(masked) if body.use_rag else []
     tool_results = (
-        tool_service.execute_safe_tools(masked, body.conversation_id, db)
-        if body.use_tools else []
+        tool_service.execute_safe_tools(masked, body.conversation_id, db) if body.use_tools else []
     )
 
     prompt = build_chat_prompt(
@@ -156,7 +162,7 @@ async def chat_stream(
     sources_payload = [{"content": s["content"][:200], "score": s["score"]} for s in sources]
     start = time.perf_counter()
 
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[str, None]:
         full_response = ""
         try:
             async for token in llm_service.generate_stream(prompt):
@@ -164,13 +170,17 @@ async def chat_stream(
                 yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
         except Exception as e:
             logger.error(f"Stream error: {e}")
-            yield f"data: {json.dumps({'type': 'error', 'message': 'Something went wrong. Please try again.'})}\n\n"
+            error_event = {"type": "error", "message": "Something went wrong. Please try again."}
+            yield f"data: {json.dumps(error_event)}\n\n"
             return
 
         memory_service.add_message(db, body.conversation_id, "assistant", full_response)
         _maybe_set_title(db, body.conversation_id, sanitized)
         record_usage(
-            db, current_user.id if current_user else None, body.conversation_id, "chat_stream",
+            db,
+            current_user.id if current_user else None,
+            body.conversation_id,
+            "chat_stream",
             latency_ms=int((time.perf_counter() - start) * 1000),
         )
 
@@ -196,7 +206,8 @@ async def chat_stream(
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def _maybe_set_title(db: Session, conversation_id: str, first_message: str):
+
+def _maybe_set_title(db: Session, conversation_id: str, first_message: str) -> None:
     conv = db.query(Conversation).filter_by(id=conversation_id).first()
     if conv and (conv.title is None or conv.title == "New Conversation"):
         title = first_message[:60].strip()

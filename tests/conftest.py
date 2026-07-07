@@ -1,5 +1,6 @@
 import os
-from typing import Any, AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
+from typing import Any
 
 # Must be set before anything under app/ is imported — Settings() has no
 # defaults for these on purpose (see app/config.py).
@@ -22,8 +23,8 @@ from app.dependencies import (
 )
 from app.main import app
 
-
 # ─── Fakes: no real Postgres/pgvector/Groq calls in tests ─────────────────────
+
 
 class FakeEmbeddingService:
     model = None
@@ -33,19 +34,19 @@ class FakeVectorStoreService:
     """In-memory stand-in for the PGVector-backed VectorStoreService."""
 
     def __init__(self):
-        self._chunks: List[Dict[str, Any]] = []
+        self._chunks: list[dict[str, Any]] = []
 
-    def add_documents(self, texts: List[str], metadatas: List[Dict[str, Any]]) -> None:
-        for text, meta in zip(texts, metadatas):
+    def add_documents(self, texts: list[str], metadatas: list[dict[str, Any]]) -> None:
+        for text, meta in zip(texts, metadatas, strict=False):
             self._chunks.append({"content": text, "metadata": meta})
 
     def delete_by_doc_id(self, doc_id: int) -> None:
         self._chunks = [c for c in self._chunks if c["metadata"].get("doc_id") != doc_id]
 
-    def search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         return [{**c, "score": 0.9} for c in self._chunks[:k]]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {"collection": "test", "index_type": "fake", "total": len(self._chunks)}
 
 
@@ -62,7 +63,7 @@ class FakeLLMService:
 
 
 class FakeAgentService:
-    async def run(self, question: str, conversation_id: str, db) -> Dict[str, Any]:
+    async def run(self, question: str, conversation_id: str, db) -> dict[str, Any]:
         return {
             "answer": "fake agent answer",
             "thoughts": ["fake agent answer"],
@@ -138,7 +139,11 @@ def auth_client():
     with TestClient(app) as c:
         c.post(
             "/api/auth/register",
-            json={"email": "user@example.com", "password": "TestPass123!", "full_name": "Test User"},
+            json={
+                "email": "user@example.com",
+                "password": "TestPass123!",
+                "full_name": "Test User",
+            },
         )
         c.post(
             "/api/auth/login",
