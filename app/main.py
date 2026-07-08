@@ -16,8 +16,8 @@ from app.utils.rate_limit import limiter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create required directories
-    os.makedirs("data/documents", exist_ok=True)
+    # data/logs is the only local directory the app still writes to
+    # (loguru's file sink) — documents and vectors live entirely in Postgres.
     os.makedirs("data/logs", exist_ok=True)
     # Initialize database tables
     init_db()

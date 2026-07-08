@@ -43,15 +43,8 @@ dmypy.json
 !.env.example
 !.env.local.example
 
-# ─── Data (runtime, not source) ───────────────────────────────────────────────
-data/vectorstore/*
-data/documents/*
-data/logs/*
-data/*.db
-data/*.db-journal
-!data/vectorstore/.gitkeep
-!data/documents/.gitkeep
-!data/logs/.gitkeep
+# ─── Data (runtime output only — documents/vectors live in Postgres, not here) ─
+data/
 
 # SQLite
 *.db

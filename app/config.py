@@ -20,9 +20,9 @@ class Settings(BaseSettings):
     # Embeddings
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
-    # Database (Postgres + pgvector — also backs the document vector store)
+    # Database (Postgres + pgvector — also backs the document vector store;
+    # uploaded document content lives here too, nothing is written to disk)
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5433/ai_assistant"
-    DOCUMENTS_PATH: str = "./data/documents"
 
     # Comma-separated list of frontend origins allowed to make credentialed requests
     ALLOWED_ORIGINS: str = "http://localhost:3000"
