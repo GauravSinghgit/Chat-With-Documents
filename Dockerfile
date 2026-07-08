@@ -1,5 +1,5 @@
 # ── Stage 1: build dependencies ───────────────────────────────────────────────
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -25,8 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /install /usr/local
 COPY . .
 
-# Create data directories
-RUN mkdir -p data/documents data/vectorstore data/logs
+# Create data directories (vector storage now lives in Postgres/pgvector)
+RUN mkdir -p data/documents data/logs
 
 # Non-root user for security
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app

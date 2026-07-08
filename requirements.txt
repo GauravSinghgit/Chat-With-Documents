@@ -1,3 +1,11 @@
+# CPU-only torch build — sentence-transformers pulls in torch, and on Linux
+# the default PyPI wheel drags in several GB of NVIDIA CUDA packages
+# (cudnn/cusparselt/nccl/...) that this CPU-only embedding workload never
+# uses. Pinning the CPU wheel explicitly keeps the image (and Render's
+# build time) sane.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.13.4

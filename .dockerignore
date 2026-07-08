@@ -1,0 +1,37 @@
+.git
+.github
+
+# Frontend (built/deployed separately via frontend/Dockerfile) — the
+# backend image needs none of it
+frontend
+
+# Python
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Virtual environments
+venv
+.venv
+myvenv
+
+# Runtime data (not needed in the image; volumes/DB handle persistence)
+data/*.db
+data/*.db-journal
+data/logs/*
+data/documents/*
+data/vectorstore/*
+!data/logs/.gitkeep
+!data/documents/.gitkeep
+!data/vectorstore/.gitkeep
+
+# Secrets / local env
+.env
+.env.local
+
+# Claude Code local state
+.claude
