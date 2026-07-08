@@ -6,7 +6,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
 import { Bot, Loader2 } from "lucide-react";
@@ -47,7 +54,9 @@ export default function RegisterPage() {
             <Bot className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="text-sm text-muted-foreground">Get started with AI Assistant</p>
+          <p className="text-sm text-muted-foreground">
+            Get started with AI Assistant
+          </p>
         </div>
 
         <Card>
@@ -93,11 +102,18 @@ export default function RegisterPage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Create account"
+                )}
               </Button>
               <p className="text-sm text-muted-foreground text-center">
                 Already have an account?{" "}
-                <Link href="/login" className="text-primary font-medium hover:underline">
+                <Link
+                  href="/login"
+                  className="text-primary font-medium hover:underline"
+                >
                   Sign in
                 </Link>
               </p>

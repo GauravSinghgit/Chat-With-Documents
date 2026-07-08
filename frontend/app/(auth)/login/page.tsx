@@ -50,13 +50,17 @@ export default function LoginPage() {
             <Bot className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">AI Assistant</h1>
-          <p className="text-sm text-muted-foreground">Your intelligent companion</p>
+          <p className="text-sm text-muted-foreground">
+            Your intelligent companion
+          </p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>Enter your email and password to continue</CardDescription>
+            <CardDescription>
+              Enter your email and password to continue
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
@@ -86,11 +90,18 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Sign in"
+                )}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="font-medium text-primary hover:underline">
+                <Link
+                  href="/register"
+                  className="font-medium text-primary hover:underline"
+                >
                   Create one
                 </Link>
               </p>
