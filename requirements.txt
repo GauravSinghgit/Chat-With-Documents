@@ -27,6 +27,12 @@ presidio-anonymizer==2.2.351
 PyMuPDF==1.23.8
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+# passlib 1.7.4 reads bcrypt.__about__.__version__ to detect the backend
+# version; that attribute was removed in bcrypt>=4.1, so an unpinned
+# install pulls the latest bcrypt and crashes with AttributeError the
+# moment hash_password()/verify_password() runs. Pin to a version passlib
+# 1.7.4 actually supports.
+bcrypt==4.0.1
 slowapi==0.1.9
 duckduckgo-search==4.4.3
 loguru==0.7.2
