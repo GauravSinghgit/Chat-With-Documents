@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChatSidebar } from "@/components/chat/ChatSidebar";
+import { AppShell } from "@/components/chat/AppShell";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,9 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ChatSidebar onLogout={handleLogout} userName={user?.email} isAdmin={user?.is_admin} />
-      <main className="flex-1 overflow-hidden">{children}</main>
-    </div>
+    <AppShell onLogout={handleLogout} userName={user?.email} isAdmin={user?.is_admin}>
+      {children}
+    </AppShell>
   );
 }

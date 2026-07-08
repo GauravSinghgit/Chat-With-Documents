@@ -6,9 +6,33 @@ import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "AI Assistant Platform",
-  description: "Intelligent AI assistant with RAG, streaming, and agentic capabilities",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "AI Assistant Platform",
+    template: "%s | AI Assistant Platform",
+  },
+  description:
+    "An AI chat assistant with RAG over your documents, a LangGraph agent with tool use, and streaming responses.",
+  openGraph: {
+    title: "AI Assistant Platform",
+    description:
+      "An AI chat assistant with RAG over your documents, a LangGraph agent with tool use, and streaming responses.",
+    siteName: "AI Assistant Platform",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Assistant Platform",
+    description:
+      "An AI chat assistant with RAG over your documents, a LangGraph agent with tool use, and streaming responses.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

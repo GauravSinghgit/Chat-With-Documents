@@ -31,8 +31,9 @@ htmlcov/
 nosetests.xml
 coverage.xml
 
-# Type checking
+# Linting / type checking
 .mypy_cache/
+.ruff_cache/
 .dmypy.json
 dmypy.json
 
@@ -99,6 +100,9 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Claude Code local state (worktrees, launch config, session data)
+.claude/
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log

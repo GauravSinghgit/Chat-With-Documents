@@ -116,6 +116,7 @@ export function ChatInput({
           <DropdownMenuTrigger asChild>
             <button
               title="Focus on a specific document"
+              aria-label="Focus on a specific document"
               className={cn(
                 "flex max-w-[180px] items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                 focusDoc
@@ -201,7 +202,13 @@ export function ChatInput({
           rows={1}
         />
         {isStreaming ? (
-          <Button variant="outline" size="icon" onClick={onCancel} title="Stop generation">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onCancel}
+            title="Stop generation"
+            aria-label="Stop generation"
+          >
             <Square className="h-4 w-4 fill-current" />
           </Button>
         ) : (
@@ -210,6 +217,7 @@ export function ChatInput({
             onClick={handleSend}
             disabled={!value.trim() || disabled}
             title="Send (Enter)"
+            aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>
